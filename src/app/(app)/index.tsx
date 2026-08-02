@@ -1,3 +1,4 @@
+import { Link } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -6,7 +7,6 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth-context';
-import { supabase } from '@/lib/supabase';
 
 export default function AppHomeScreen() {
   const { profile } = useAuth();
@@ -22,7 +22,9 @@ export default function AppHomeScreen() {
             {profile?.display_name ?? profile?.username}
           </ThemedText>
         </View>
-        <Button label="Log out" variant="ghost" onPress={() => supabase.auth.signOut()} />
+        <Link href="/(app)/settings" asChild>
+          <Button label="Settings" variant="outline" />
+        </Link>
       </SafeAreaView>
     </ThemedView>
   );
