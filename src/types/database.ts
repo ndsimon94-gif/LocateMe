@@ -212,6 +212,70 @@ export type Database = {
         };
         Relationships: [];
       };
+      friend_notes: {
+        Row: {
+          friendship_id: string;
+          owner_id: string;
+          body: string;
+          updated_at: string;
+        };
+        Insert: {
+          friendship_id: string;
+          owner_id: string;
+          body?: string;
+          updated_at?: string;
+        };
+        Update: {
+          friendship_id?: string;
+          owner_id?: string;
+          body?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      tags: {
+        Row: {
+          id: string;
+          owner_id: string;
+          name: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          owner_id: string;
+          name: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          owner_id?: string;
+          name?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      friend_tags: {
+        Row: {
+          friendship_id: string;
+          tag_id: string;
+        };
+        Insert: {
+          friendship_id: string;
+          tag_id: string;
+        };
+        Update: {
+          friendship_id?: string;
+          tag_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'friend_tags_tag_id_fkey';
+            columns: ['tag_id'];
+            referencedRelation: 'tags';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
