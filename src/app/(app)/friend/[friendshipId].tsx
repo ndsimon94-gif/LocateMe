@@ -76,6 +76,7 @@ export default function FriendDetailScreen() {
               countryName={friend.country_name}
               cityName={friend.city_name}
             />
+            <Button label="Message" onPress={() => router.push(`/(app)/chat/${friendshipId}`)} />
           </View>
 
           <View style={styles.section}>
