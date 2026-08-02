@@ -22,9 +22,17 @@ export default function AppHomeScreen() {
             {profile?.display_name ?? profile?.username}
           </ThemedText>
         </View>
-        <Link href="/(app)/settings" asChild>
-          <Button label="Settings" variant="outline" />
-        </Link>
+        <View style={styles.actions}>
+          <Link href="/(app)/connect" asChild>
+            <Button label="My code" />
+          </Link>
+          <Link href="/(app)/connect/scan" asChild>
+            <Button label="Scan a friend's code" variant="outline" />
+          </Link>
+          <Link href="/(app)/settings" asChild>
+            <Button label="Settings" variant="ghost" />
+          </Link>
+        </View>
       </SafeAreaView>
     </ThemedView>
   );
@@ -45,5 +53,8 @@ const styles = StyleSheet.create({
   },
   title: {
     textAlign: 'center',
+  },
+  actions: {
+    gap: Spacing.two,
   },
 });

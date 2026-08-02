@@ -32,6 +32,12 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Orbit only uses your camera to scan a friend's code — nothing is recorded."
+        }
       ]
     ],
     "experiments": {
