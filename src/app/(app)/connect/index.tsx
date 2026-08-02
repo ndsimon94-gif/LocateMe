@@ -1,8 +1,10 @@
+import { Link } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import QRCode from 'react-native-qrcode-svg';
 
+import { Button } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
@@ -75,6 +77,9 @@ export default function MyCodeScreen() {
             Show this to a friend to connect. Gone in three minutes — nothing left to leak.
           </ThemedText>
         </View>
+        <Link href="/(app)/connect/scan" asChild>
+          <Button label="Scan a code instead" variant="ghost" />
+        </Link>
       </SafeAreaView>
     </ThemedView>
   );

@@ -225,6 +225,20 @@ export type Database = {
           already_connected: boolean;
         }[];
       };
+      get_friends_with_location: {
+        Args: Record<string, never>;
+        Returns: {
+          friendship_id: string;
+          friend_id: string;
+          username: string | null;
+          display_name: string | null;
+          sharing_level: 'off' | 'country' | 'city';
+          country_code: string | null;
+          country_name: string | null;
+          city_id: string | null;
+          city_name: string | null;
+        }[];
+      };
     };
     Enums: Record<string, never>;
   };
