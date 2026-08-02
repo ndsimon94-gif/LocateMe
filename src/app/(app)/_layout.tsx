@@ -27,7 +27,8 @@ export default function AppLayout() {
       <Tabs.Screen name="settings" options={{ title: 'Settings' }} />
       <Tabs.Screen name="connect/index" options={{ href: null }} />
       <Tabs.Screen name="connect/scan" options={{ href: null }} />
-      <Tabs.Screen name="friend/[friendshipId]" options={{ href: null }} />
+      <Tabs.Screen name="friend/[friendshipId]/index" options={{ href: null }} />
+      <Tabs.Screen name="friend/[friendshipId]/sharing" options={{ href: null }} />
       <Tabs.Screen name="chat/[friendshipId]" options={{ href: null }} />
       <Tabs.Screen name="trips/add" options={{ href: null }} />
     </Tabs>

@@ -112,6 +112,12 @@ export default function FriendDetailScreen() {
             </View>
           </View>
 
+          <Button
+            label="Sharing settings"
+            variant="outline"
+            onPress={() => router.push(`/(app)/friend/${friendshipId}/sharing`)}
+          />
+
           <Button label="Unfriend" variant="danger" onPress={handleUnfriend} />
         </ScrollView>
       </SafeAreaView>
