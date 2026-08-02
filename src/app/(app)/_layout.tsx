@@ -23,11 +23,13 @@ export default function AppLayout() {
         tabBarStyle: { backgroundColor: theme.backgroundElement, borderTopColor: theme.line },
       }}>
       <Tabs.Screen name="index" options={{ title: 'Friends' }} />
+      <Tabs.Screen name="trips/index" options={{ title: 'Trips' }} />
       <Tabs.Screen name="settings" options={{ title: 'Settings' }} />
       <Tabs.Screen name="connect/index" options={{ href: null }} />
       <Tabs.Screen name="connect/scan" options={{ href: null }} />
       <Tabs.Screen name="friend/[friendshipId]" options={{ href: null }} />
       <Tabs.Screen name="chat/[friendshipId]" options={{ href: null }} />
+      <Tabs.Screen name="trips/add" options={{ href: null }} />
     </Tabs>
   );
 }

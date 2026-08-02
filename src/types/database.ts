@@ -276,6 +276,36 @@ export type Database = {
           },
         ];
       };
+      trips: {
+        Row: {
+          id: string;
+          owner_id: string;
+          city_id: string;
+          country_code: string;
+          start_date: string;
+          end_date: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          owner_id: string;
+          city_id: string;
+          country_code: string;
+          start_date: string;
+          end_date: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          owner_id?: string;
+          city_id?: string;
+          country_code?: string;
+          start_date?: string;
+          end_date?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -301,6 +331,19 @@ export type Database = {
           country_name: string | null;
           city_id: string | null;
           city_name: string | null;
+        }[];
+      };
+      get_upcoming_trips_with_overlap: {
+        Args: Record<string, never>;
+        Returns: {
+          trip_id: string;
+          city_id: string;
+          city_name: string;
+          country_code: string;
+          country_name: string;
+          start_date: string;
+          end_date: string;
+          overlap_friend_names: string[];
         }[];
       };
     };
