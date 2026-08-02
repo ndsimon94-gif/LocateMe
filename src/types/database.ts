@@ -329,8 +329,12 @@ export type Database = {
           sharing_level: 'off' | 'country' | 'city';
           country_code: string | null;
           country_name: string | null;
+          country_lat: number | null;
+          country_lng: number | null;
           city_id: string | null;
           city_name: string | null;
+          city_lat: number | null;
+          city_lng: number | null;
         }[];
       };
       get_upcoming_trips_with_overlap: {
