@@ -346,6 +346,18 @@ export type Database = {
           overlap_friend_names: string[];
         }[];
       };
+      get_friendship_history: {
+        Args: Record<string, never>;
+        Returns: {
+          friendship_id: string;
+          friend_id: string;
+          username: string | null;
+          display_name: string | null;
+          connected_country_name: string | null;
+          connected_city_name: string | null;
+          created_at: string;
+        }[];
+      };
     };
     Enums: Record<string, never>;
   };
