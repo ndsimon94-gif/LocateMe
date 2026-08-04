@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -35,8 +34,10 @@ export default function CompleteProfileScreen() {
       setError(mapProfileSaveError(error));
       return;
     }
+    // No manual navigation here either: refreshing the profile updates the
+    // state the (auth) group's guard watches, which redirects to (app)
+    // reactively once profile.username is set.
     await refreshProfile();
-    router.replace('/');
   }
 
   return (

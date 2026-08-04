@@ -1,4 +1,4 @@
-import { Link, router } from 'expo-router';
+import { Link } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -24,9 +24,11 @@ export default function SignUpScreen() {
     setLoading(false);
     if (error) {
       setError(mapSignUpError(error.message));
-      return;
     }
-    router.replace('/(auth)/complete-profile');
+    // No manual navigation on success: once the session lands, the (auth)
+    // group's own guard redirects to complete-profile reactively — avoids
+    // racing an imperative push against that guard re-rendering at the
+    // same time.
   }
 
   return (

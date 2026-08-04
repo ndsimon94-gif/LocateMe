@@ -28,5 +28,6 @@ export function resolveAuthGroupRedirect(
   profile: Profile | null,
 ): Href | null {
   if (session && profile?.username) return '/(app)';
+  if (session && !profile?.username) return '/(auth)/complete-profile';
   return null;
 }
