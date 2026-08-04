@@ -20,7 +20,10 @@ export default function CompleteProfileScreen() {
   const [loading, setLoading] = useState(false);
 
   async function handleDone() {
-    if (!session) return;
+    if (!session) {
+      setError('Check your email to confirm your account, then come back and try again.');
+      return;
+    }
     setError(null);
     setLoading(true);
     const { error } = await supabase
