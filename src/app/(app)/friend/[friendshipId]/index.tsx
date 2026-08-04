@@ -31,7 +31,6 @@ export default function FriendDetailScreen() {
     // Seeds the editable draft once the note finishes its async load;
     // this isn't derived state, it's a one-time sync from a data source
     // outside React into locally-owned editable text.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDraftNote(note);
   }, [note]);
 
