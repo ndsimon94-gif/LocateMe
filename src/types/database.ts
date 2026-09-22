@@ -129,6 +129,8 @@ export type Database = {
           user_id_b: string;
           connected_country_code: string | null;
           connected_city_id: string | null;
+          met_place: string | null;
+          met_story: string | null;
           created_at: string;
         };
         Insert: {
@@ -137,6 +139,8 @@ export type Database = {
           user_id_b: string;
           connected_country_code?: string | null;
           connected_city_id?: string | null;
+          met_place?: string | null;
+          met_story?: string | null;
           created_at?: string;
         };
         Update: {
@@ -145,6 +149,8 @@ export type Database = {
           user_id_b?: string;
           connected_country_code?: string | null;
           connected_city_id?: string | null;
+          met_place?: string | null;
+          met_story?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -276,6 +282,30 @@ export type Database = {
           },
         ];
       };
+      friendship_photos: {
+        Row: {
+          id: string;
+          friendship_id: string;
+          uploaded_by: string;
+          storage_path: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          friendship_id: string;
+          uploaded_by: string;
+          storage_path: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          friendship_id?: string;
+          uploaded_by?: string;
+          storage_path?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       trips: {
         Row: {
           id: string;
@@ -359,6 +389,12 @@ export type Database = {
           display_name: string | null;
           connected_country_name: string | null;
           connected_city_name: string | null;
+          connected_city_lat: number | null;
+          connected_city_lng: number | null;
+          connected_country_lat: number | null;
+          connected_country_lng: number | null;
+          met_place: string | null;
+          met_story: string | null;
           created_at: string;
         }[];
       };
