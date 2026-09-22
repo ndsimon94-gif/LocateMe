@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
@@ -80,6 +80,17 @@ export default function FriendDetailScreen() {
     }
   }
 
+  function handleOpenWhatsapp() {
+    const digits = friend!.whatsapp_number?.replace(/[^\d+]/g, '');
+    if (!digits) return;
+    Linking.openURL(`https://wa.me/${digits.replace(/^\+/, '')}`);
+  }
+
+  function handleOpenSocial() {
+    const handle = friend!.social_handle?.trim();
+    if (handle && /^https?:\/\//i.test(handle)) Linking.openURL(handle);
+  }
+
   function handleUnfriend() {
     Alert.alert(`Unfriend ${name}?`, "You'll stop seeing each other's location, and lose this chat. This can't be undone.", [
       { text: 'Cancel', style: 'cancel' },
@@ -112,6 +123,44 @@ export default function FriendDetailScreen() {
             />
             <Button label="Message" onPress={() => router.push(`/(app)/chat/${friendshipId}`)} />
           </View>
+
+          {(friend.whatsapp_number || friend.social_handle || friend.contact_message) && (
+            <View style={styles.section}>
+              <ThemedText style={styles.sectionLabel}>Reach out</ThemedText>
+              {friend.whatsapp_number && (
+                <View style={styles.contactRow}>
+                  <View style={styles.contactBody}>
+                    <ThemedText themeColor="textSecondary" style={styles.contactLabel}>
+                      WhatsApp
+                    </ThemedText>
+                    <ThemedText>{friend.whatsapp_number}</ThemedText>
+                  </View>
+                  <Button label="Open" variant="outline" onPress={handleOpenWhatsapp} />
+                </View>
+              )}
+              {friend.social_handle && (
+                <View style={styles.contactRow}>
+                  <View style={styles.contactBody}>
+                    <ThemedText themeColor="textSecondary" style={styles.contactLabel}>
+                      Social media
+                    </ThemedText>
+                    <ThemedText>{friend.social_handle}</ThemedText>
+                  </View>
+                  {/^https?:\/\//i.test(friend.social_handle) && (
+                    <Button label="Open" variant="outline" onPress={handleOpenSocial} />
+                  )}
+                </View>
+              )}
+              {friend.contact_message && (
+                <View>
+                  <ThemedText themeColor="textSecondary" style={styles.contactLabel}>
+                    Message
+                  </ThemedText>
+                  <ThemedText>{friend.contact_message}</ThemedText>
+                </View>
+              )}
+            </View>
+          )}
 
           <View style={styles.section}>
             <ThemedText style={styles.sectionLabel}>Our story</ThemedText>
@@ -241,5 +290,20 @@ const styles = StyleSheet.create({
   },
   addTagField: {
     flex: 1,
+  },
+  contactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
+  },
+  contactBody: {
+    flex: 1,
+    gap: 2,
+  },
+  contactLabel: {
+    fontSize: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 });

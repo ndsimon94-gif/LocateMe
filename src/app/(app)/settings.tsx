@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/button';
 import { LocationPicker, type LocationSelection } from '@/components/location-picker';
 import { SegmentedControl } from '@/components/segmented-control';
+import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
@@ -29,6 +30,15 @@ export default function SettingsScreen() {
   const { session, profile, refreshProfile } = useAuth();
   const [pickerOpen, setPickerOpen] = useState(false);
   const [currentLabel, setCurrentLabel] = useState<string | null>(null);
+  const [draftWhatsapp, setDraftWhatsapp] = useState('');
+  const [draftSocial, setDraftSocial] = useState('');
+  const [draftMessage, setDraftMessage] = useState('');
+
+  useEffect(() => {
+    setDraftWhatsapp(profile?.whatsapp_number ?? '');
+    setDraftSocial(profile?.social_handle ?? '');
+    setDraftMessage(profile?.contact_message ?? '');
+  }, [profile]);
 
   useEffect(() => {
     let cancelled = false;
@@ -110,6 +120,25 @@ export default function SettingsScreen() {
     setPickerOpen(false);
   }
 
+  async function handleContactBlur() {
+    if (
+      draftWhatsapp === (profile!.whatsapp_number ?? '') &&
+      draftSocial === (profile!.social_handle ?? '') &&
+      draftMessage === (profile!.contact_message ?? '')
+    ) {
+      return;
+    }
+    await supabase
+      .from('profiles')
+      .update({
+        whatsapp_number: draftWhatsapp || null,
+        social_handle: draftSocial || null,
+        contact_message: draftMessage || null,
+      })
+      .eq('id', session!.user.id);
+    await refreshProfile();
+  }
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -146,6 +175,37 @@ export default function SettingsScreen() {
             {pickerOpen && level !== 'off' && (
               <LocationPicker mode={level} onSelect={handleLocationSelect} />
             )}
+          </View>
+
+          <View style={styles.section}>
+            <ThemedText style={styles.sectionLabel}>Contact info</ThemedText>
+            <ThemedText themeColor="textSecondary" style={styles.help}>
+              Shown to friends you&apos;re connected with. Leave blank to keep something private.
+            </ThemedText>
+            <TextField
+              label="WhatsApp"
+              value={draftWhatsapp}
+              onChangeText={setDraftWhatsapp}
+              onBlur={handleContactBlur}
+              placeholder="+1 555 123 4567"
+              keyboardType="phone-pad"
+            />
+            <TextField
+              label="Social media"
+              value={draftSocial}
+              onChangeText={setDraftSocial}
+              onBlur={handleContactBlur}
+              placeholder="@yourhandle or a profile link"
+            />
+            <TextField
+              label="Message"
+              value={draftMessage}
+              onChangeText={setDraftMessage}
+              onBlur={handleContactBlur}
+              placeholder="Best reached in the evenings, CET"
+              multiline
+              style={styles.messageInput}
+            />
           </View>
 
           <Button label="Log out" variant="ghost" onPress={() => supabase.auth.signOut()} />
@@ -187,5 +247,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: Spacing.two,
+  },
+  messageInput: {
+    minHeight: 72,
+    textAlignVertical: 'top',
   },
 });

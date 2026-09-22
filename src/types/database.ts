@@ -13,6 +13,9 @@ export type Database = {
           current_country_code: string | null;
           current_city_id: string | null;
           location_updated_at: string | null;
+          whatsapp_number: string | null;
+          social_handle: string | null;
+          contact_message: string | null;
           created_at: string;
         };
         Insert: {
@@ -23,6 +26,9 @@ export type Database = {
           current_country_code?: string | null;
           current_city_id?: string | null;
           location_updated_at?: string | null;
+          whatsapp_number?: string | null;
+          social_handle?: string | null;
+          contact_message?: string | null;
           created_at?: string;
         };
         Update: {
@@ -33,6 +39,9 @@ export type Database = {
           current_country_code?: string | null;
           current_city_id?: string | null;
           location_updated_at?: string | null;
+          whatsapp_number?: string | null;
+          social_handle?: string | null;
+          contact_message?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -365,6 +374,9 @@ export type Database = {
           city_name: string | null;
           city_lat: number | null;
           city_lng: number | null;
+          whatsapp_number: string | null;
+          social_handle: string | null;
+          contact_message: string | null;
         }[];
       };
       get_upcoming_trips_with_overlap: {
