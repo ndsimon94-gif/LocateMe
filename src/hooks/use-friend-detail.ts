@@ -9,12 +9,14 @@ export function useFriendDetail(friendshipId: string | undefined) {
   const { session } = useAuth();
   const [note, setNote] = useState('');
   const [tags, setTags] = useState<Tag[]>([]);
+  const [metPlace, setMetPlace] = useState('');
+  const [metStory, setMetStory] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     if (!friendshipId || !session) return;
     setIsLoading(true);
-    const [{ data: noteRow }, { data: tagRows }] = await Promise.all([
+    const [{ data: noteRow }, { data: tagRows }, { data: friendshipRow }] = await Promise.all([
       supabase
         .from('friend_notes')
         .select('body')
@@ -22,11 +24,14 @@ export function useFriendDetail(friendshipId: string | undefined) {
         .eq('owner_id', session.user.id)
         .maybeSingle(),
       supabase.from('friend_tags').select('tags ( id, name )').eq('friendship_id', friendshipId),
+      supabase.from('friendships').select('met_place, met_story').eq('id', friendshipId).single(),
     ]);
     setNote(noteRow?.body ?? '');
     type Row = { tags: Tag | null };
     const rows = (tagRows as unknown as Row[]) ?? [];
     setTags(rows.map((row) => row.tags).filter((tag): tag is Tag => tag !== null));
+    setMetPlace(friendshipRow?.met_place ?? '');
+    setMetStory(friendshipRow?.met_story ?? '');
     setIsLoading(false);
   }, [friendshipId, session]);
 
@@ -51,6 +56,19 @@ export function useFriendDetail(friendshipId: string | undefined) {
         });
     },
     [friendshipId, session],
+  );
+
+  const saveStory = useCallback(
+    async (place: string, story: string) => {
+      if (!friendshipId) return;
+      setMetPlace(place);
+      setMetStory(story);
+      await supabase
+        .from('friendships')
+        .update({ met_place: place || null, met_story: story || null })
+        .eq('id', friendshipId);
+    },
+    [friendshipId],
   );
 
   const addTag = useCallback(
@@ -92,5 +110,15 @@ export function useFriendDetail(friendshipId: string | undefined) {
     [friendshipId],
   );
 
-  return { note, tags, isLoading, saveNote, addTag, removeTag };
+  return {
+    note,
+    tags,
+    metPlace,
+    metStory,
+    isLoading,
+    saveNote,
+    saveStory,
+    addTag,
+    removeTag,
+  };
 }

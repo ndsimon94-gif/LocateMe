@@ -6,12 +6,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/button';
 import { LoadingScreen } from '@/components/loading-screen';
 import { LocationBadge } from '@/components/location-badge';
+import { PhotoGallery } from '@/components/photo-gallery';
 import { TagChip } from '@/components/tag-chip';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useFriendDetail } from '@/hooks/use-friend-detail';
+import { useFriendshipPhotos } from '@/hooks/use-friendship-photos';
 import { useFriendsWithLocation } from '@/hooks/use-friends-with-location';
 import { useTheme } from '@/hooks/use-theme';
 import { supabase } from '@/lib/supabase';
@@ -20,19 +22,46 @@ export default function FriendDetailScreen() {
   const { friendshipId } = useLocalSearchParams<{ friendshipId: string }>();
   const theme = useTheme();
   const { friends, isLoading: friendsLoading } = useFriendsWithLocation();
-  const { note, tags, isLoading: detailLoading, saveNote, addTag, removeTag } =
-    useFriendDetail(friendshipId);
+  const {
+    note,
+    tags,
+    metPlace,
+    metStory,
+    isLoading: detailLoading,
+    saveNote,
+    saveStory,
+    addTag,
+    removeTag,
+  } = useFriendDetail(friendshipId);
+  const {
+    photos,
+    isLoading: photosLoading,
+    isUploading,
+    addPhoto,
+    removePhoto,
+    myUserId,
+  } = useFriendshipPhotos(friendshipId);
 
   const friend = friends.find((item) => item.friendship_id === friendshipId);
   const [draftNote, setDraftNote] = useState('');
+  const [draftPlace, setDraftPlace] = useState('');
+  const [draftStory, setDraftStory] = useState('');
   const [newTag, setNewTag] = useState('');
 
   useEffect(() => {
-    // Seeds the editable draft once the note finishes its async load;
-    // this isn't derived state, it's a one-time sync from a data source
-    // outside React into locally-owned editable text.
+    // Seeds the editable drafts once each finishes its async load; this
+    // isn't derived state, it's a one-time sync from a data source outside
+    // React into locally-owned editable text.
     setDraftNote(note);
   }, [note]);
+
+  useEffect(() => {
+    setDraftPlace(metPlace);
+  }, [metPlace]);
+
+  useEffect(() => {
+    setDraftStory(metStory);
+  }, [metStory]);
 
   if (friendsLoading || detailLoading) return <LoadingScreen />;
   if (!friend) return null;
@@ -43,6 +72,12 @@ export default function FriendDetailScreen() {
     if (!newTag.trim()) return;
     addTag(newTag);
     setNewTag('');
+  }
+
+  function handleStoryBlur() {
+    if (draftPlace !== metPlace || draftStory !== metStory) {
+      saveStory(draftPlace, draftStory);
+    }
   }
 
   function handleUnfriend() {
@@ -76,6 +111,39 @@ export default function FriendDetailScreen() {
               cityName={friend.city_name}
             />
             <Button label="Message" onPress={() => router.push(`/(app)/chat/${friendshipId}`)} />
+          </View>
+
+          <View style={styles.section}>
+            <ThemedText style={styles.sectionLabel}>Our story</ThemedText>
+            <ThemedText themeColor="textSecondary" style={styles.sectionHint}>
+              Visible to both of you.
+            </ThemedText>
+            <TextField
+              value={draftPlace}
+              onChangeText={setDraftPlace}
+              onBlur={handleStoryBlur}
+              placeholder="Where you met — a hostel, a bar, a trail"
+            />
+            <TextField
+              value={draftStory}
+              onChangeText={setDraftStory}
+              onBlur={handleStoryBlur}
+              placeholder="How you met"
+              multiline
+              style={styles.noteInput}
+            />
+            <PhotoGallery
+              photos={photos}
+              isUploading={isUploading || photosLoading}
+              myUserId={myUserId}
+              onAdd={addPhoto}
+              onRemove={removePhoto}
+            />
+            {photos.length > 0 && (
+              <ThemedText themeColor="textSecondary" style={styles.sectionHint}>
+                Long-press a photo to remove one you added.
+              </ThemedText>
+            )}
           </View>
 
           <View style={styles.section}>
@@ -152,6 +220,10 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 13,
     fontWeight: '600',
+  },
+  sectionHint: {
+    fontSize: 12,
+    marginTop: -Spacing.one,
   },
   noteInput: {
     minHeight: 72,

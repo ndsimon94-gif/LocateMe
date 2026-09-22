@@ -43,6 +43,12 @@
         {
           "cameraPermission": "Orbit only uses your camera to scan a friend's code — nothing is recorded."
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Orbit uses your photo library so you can add a photo to a shared memory with a friend."
+        }
       ]
     ],
     "experiments": {
