@@ -4,6 +4,7 @@ import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
+import { HistoryMap } from '@/components/history-map';
 import { SegmentedControl } from '@/components/segmented-control';
 import { StampRow } from '@/components/stamp-row';
 import { ThemedText } from '@/components/themed-text';
@@ -15,14 +16,21 @@ import { useUpcomingTrips } from '@/hooks/use-upcoming-trips';
 import { formatDate, formatDateRange } from '@/lib/format-date';
 
 type Segment = 'upcoming' | 'history';
+type HistoryView = 'list' | 'map';
 
 const SEGMENT_OPTIONS: { label: string; value: Segment }[] = [
   { label: 'Upcoming', value: 'upcoming' },
   { label: 'History', value: 'history' },
 ];
 
+const HISTORY_VIEW_OPTIONS: { label: string; value: HistoryView }[] = [
+  { label: 'List', value: 'list' },
+  { label: 'Map', value: 'map' },
+];
+
 export default function TripsScreen() {
   const [segment, setSegment] = useState<Segment>('upcoming');
+  const [historyView, setHistoryView] = useState<HistoryView>('list');
   const { trips, isLoading, refresh } = useUpcomingTrips();
   const {
     entries: historyEntries,
@@ -84,24 +92,35 @@ export default function TripsScreen() {
             </ThemedText>
           </View>
         ) : (
-          <FlatList
-            style={styles.listFlex}
-            data={historyEntries}
-            keyExtractor={(item) => item.friendship_id}
-            contentContainerStyle={styles.list}
-            onRefresh={refreshHistory}
-            refreshing={historyLoading}
-            renderItem={({ item }) => (
-              <StampRow
-                name={item.display_name ?? item.username ?? 'Unknown'}
-                whereAndWhen={
-                  item.connected_city_name
-                    ? `${item.connected_city_name} · ${formatDate(item.created_at)}`
-                    : formatDate(item.created_at)
-                }
+          <View style={styles.body}>
+            <SegmentedControl
+              options={HISTORY_VIEW_OPTIONS}
+              value={historyView}
+              onChange={setHistoryView}
+            />
+            {historyView === 'list' ? (
+              <FlatList
+                style={styles.listFlex}
+                data={historyEntries}
+                keyExtractor={(item) => item.friendship_id}
+                contentContainerStyle={styles.list}
+                onRefresh={refreshHistory}
+                refreshing={historyLoading}
+                renderItem={({ item }) => (
+                  <StampRow
+                    name={item.display_name ?? item.username ?? 'Unknown'}
+                    whereAndWhen={
+                      item.connected_city_name
+                        ? `${item.connected_city_name} · ${formatDate(item.created_at)}`
+                        : formatDate(item.created_at)
+                    }
+                  />
+                )}
               />
+            ) : (
+              <HistoryMap entries={historyEntries} />
             )}
-          />
+          </View>
         )}
       </SafeAreaView>
     </ThemedView>
