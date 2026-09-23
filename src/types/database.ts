@@ -252,18 +252,21 @@ export type Database = {
           friendship_id: string;
           owner_id: string;
           body: string;
+          remember_as: string | null;
           updated_at: string;
         };
         Insert: {
           friendship_id: string;
           owner_id: string;
           body?: string;
+          remember_as?: string | null;
           updated_at?: string;
         };
         Update: {
           friendship_id?: string;
           owner_id?: string;
           body?: string;
+          remember_as?: string | null;
           updated_at?: string;
         };
         Relationships: [];

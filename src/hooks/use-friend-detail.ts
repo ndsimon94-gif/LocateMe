@@ -8,6 +8,7 @@ type Tag = { id: string; name: string };
 export function useFriendDetail(friendshipId: string | undefined) {
   const { session } = useAuth();
   const [note, setNote] = useState('');
+  const [rememberAs, setRememberAs] = useState('');
   const [tags, setTags] = useState<Tag[]>([]);
   const [metPlace, setMetPlace] = useState('');
   const [metStory, setMetStory] = useState('');
@@ -19,7 +20,7 @@ export function useFriendDetail(friendshipId: string | undefined) {
     const [{ data: noteRow }, { data: tagRows }, { data: friendshipRow }] = await Promise.all([
       supabase
         .from('friend_notes')
-        .select('body')
+        .select('body, remember_as')
         .eq('friendship_id', friendshipId)
         .eq('owner_id', session.user.id)
         .maybeSingle(),
@@ -27,6 +28,7 @@ export function useFriendDetail(friendshipId: string | undefined) {
       supabase.from('friendships').select('met_place, met_story').eq('id', friendshipId).single(),
     ]);
     setNote(noteRow?.body ?? '');
+    setRememberAs(noteRow?.remember_as ?? '');
     type Row = { tags: Tag | null };
     const rows = (tagRows as unknown as Row[]) ?? [];
     setTags(rows.map((row) => row.tags).filter((tag): tag is Tag => tag !== null));
@@ -52,6 +54,22 @@ export function useFriendDetail(friendshipId: string | undefined) {
           friendship_id: friendshipId,
           owner_id: session.user.id,
           body,
+          updated_at: new Date().toISOString(),
+        });
+    },
+    [friendshipId, session],
+  );
+
+  const saveRememberAs = useCallback(
+    async (value: string) => {
+      if (!friendshipId || !session) return;
+      setRememberAs(value);
+      await supabase
+        .from('friend_notes')
+        .upsert({
+          friendship_id: friendshipId,
+          owner_id: session.user.id,
+          remember_as: value || null,
           updated_at: new Date().toISOString(),
         });
     },
@@ -112,11 +130,13 @@ export function useFriendDetail(friendshipId: string | undefined) {
 
   return {
     note,
+    rememberAs,
     tags,
     metPlace,
     metStory,
     isLoading,
     saveNote,
+    saveRememberAs,
     saveStory,
     addTag,
     removeTag,

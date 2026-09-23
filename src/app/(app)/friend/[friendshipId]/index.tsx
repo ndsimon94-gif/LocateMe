@@ -24,11 +24,13 @@ export default function FriendDetailScreen() {
   const { friends, isLoading: friendsLoading } = useFriendsWithLocation();
   const {
     note,
+    rememberAs,
     tags,
     metPlace,
     metStory,
     isLoading: detailLoading,
     saveNote,
+    saveRememberAs,
     saveStory,
     addTag,
     removeTag,
@@ -44,6 +46,7 @@ export default function FriendDetailScreen() {
 
   const friend = friends.find((item) => item.friendship_id === friendshipId);
   const [draftNote, setDraftNote] = useState('');
+  const [draftRememberAs, setDraftRememberAs] = useState('');
   const [draftPlace, setDraftPlace] = useState('');
   const [draftStory, setDraftStory] = useState('');
   const [newTag, setNewTag] = useState('');
@@ -55,6 +58,11 @@ export default function FriendDetailScreen() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setDraftNote(note);
   }, [note]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDraftRememberAs(rememberAs);
+  }, [rememberAs]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -214,6 +222,21 @@ export default function FriendDetailScreen() {
                 Long-press a photo to remove one you added.
               </ThemedText>
             )}
+          </View>
+
+          <View style={styles.section}>
+            <ThemedText style={styles.sectionLabel}>How I remember them</ThemedText>
+            <ThemedText themeColor="textSecondary" style={styles.sectionHint}>
+              Only you can see this.
+            </ThemedText>
+            <TextField
+              value={draftRememberAs}
+              onChangeText={setDraftRememberAs}
+              onBlur={() => draftRememberAs !== rememberAs && saveRememberAs(draftRememberAs)}
+              placeholder="Australian architect traveling with his brother; we hiked for three days."
+              multiline
+              style={styles.noteInput}
+            />
           </View>
 
           <View style={styles.section}>
