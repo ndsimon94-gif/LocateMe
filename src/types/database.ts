@@ -1,6 +1,14 @@
 // Hand-maintained to mirror `supabase/migrations`. If a real Supabase
 // project is ever linked, prefer regenerating instead:
 //   npx supabase gen types typescript --local > src/types/database.ts
+
+export type PlaceReason =
+  | { type: 'lives_there' }
+  | { type: 'currently_there' }
+  | { type: 'upcoming_trip'; date: string }
+  | { type: 'met_there' }
+  | { type: 'past_trip'; date: string };
+
 export type Database = {
   public: {
     Tables: {
@@ -446,6 +454,17 @@ export type Database = {
           met_place: string | null;
           met_story: string | null;
           created_at: string;
+        }[];
+      };
+      search_orbit_by_place: {
+        Args: { p_country_code: string };
+        Returns: {
+          friend_id: string;
+          friendship_id: string;
+          name: string | null;
+          reasons: PlaceReason[];
+          met_place: string | null;
+          met_at: string | null;
         }[];
       };
     };

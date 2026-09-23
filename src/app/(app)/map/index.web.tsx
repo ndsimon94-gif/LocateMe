@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FriendListItem } from '@/components/friend-list-item';
@@ -34,6 +34,17 @@ export default function MapScreen() {
           pinTextColor={theme.backgroundElement}
         />
       </View>
+
+      <SafeAreaView style={styles.searchWrap} pointerEvents="box-none">
+        <Pressable
+          onPress={() => router.push('/(app)/place')}
+          style={({ pressed }) => [
+            styles.searchButton,
+            { backgroundColor: theme.backgroundElement, shadowColor: theme.text, opacity: pressed ? 0.85 : 1 },
+          ]}>
+          <Text style={[styles.searchButtonLabel, { color: theme.text }]}>Search your Orbit</Text>
+        </Pressable>
+      </SafeAreaView>
 
       {selected && (
         <SafeAreaView style={styles.sheetWrap} pointerEvents="box-none">
@@ -69,6 +80,27 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   mapWrap: { flex: 1 },
+  searchWrap: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  searchButton: {
+    marginTop: Spacing.two,
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.two,
+    borderRadius: 999,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  searchButtonLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
   sheetWrap: {
     position: 'absolute',
     left: 0,
