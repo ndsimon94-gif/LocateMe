@@ -18,6 +18,8 @@ export type Database = {
           contact_message: string | null;
           home_country_code: string | null;
           home_city_id: string | null;
+          hosting_status: 'none' | 'can_host' | 'seeking_stay';
+          hosting_note: string | null;
           created_at: string;
         };
         Insert: {
@@ -33,6 +35,8 @@ export type Database = {
           contact_message?: string | null;
           home_country_code?: string | null;
           home_city_id?: string | null;
+          hosting_status?: 'none' | 'can_host' | 'seeking_stay';
+          hosting_note?: string | null;
           created_at?: string;
         };
         Update: {
@@ -48,6 +52,8 @@ export type Database = {
           contact_message?: string | null;
           home_country_code?: string | null;
           home_city_id?: string | null;
+          hosting_status?: 'none' | 'can_host' | 'seeking_stay';
+          hosting_note?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -405,6 +411,8 @@ export type Database = {
           home_country_name: string | null;
           home_city_id: string | null;
           home_city_name: string | null;
+          hosting_status: 'none' | 'can_host' | 'seeking_stay';
+          hosting_note: string | null;
         }[];
       };
       get_my_itineraries_with_connections: {

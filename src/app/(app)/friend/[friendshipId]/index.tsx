@@ -130,6 +130,18 @@ export default function FriendDetailScreen() {
                 {friend.home_country_name}
               </ThemedText>
             )}
+            {friend.hosting_status !== 'none' && (
+              <View style={[styles.hostingBadge, { backgroundColor: theme.backgroundSelected }]}>
+                <ThemedText style={[styles.hostingBadgeLabel, { color: theme.accent }]}>
+                  {friend.hosting_status === 'can_host' ? 'Can host visitors' : 'Looking for a stay'}
+                </ThemedText>
+              </View>
+            )}
+            {friend.hosting_status !== 'none' && friend.hosting_note && (
+              <ThemedText themeColor="textSecondary" style={styles.hostingNote}>
+                {friend.hosting_note}
+              </ThemedText>
+            )}
             <Button label="Message" onPress={() => router.push(`/(app)/chat/${friendshipId}`)} />
           </View>
 
@@ -317,5 +329,21 @@ const styles = StyleSheet.create({
   },
   homeBase: {
     fontSize: 13,
+  },
+  hostingBadge: {
+    alignSelf: 'center',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    marginTop: Spacing.one,
+  },
+  hostingBadgeLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  hostingNote: {
+    fontSize: 13,
+    textAlign: 'center',
+    paddingHorizontal: Spacing.four,
   },
 });

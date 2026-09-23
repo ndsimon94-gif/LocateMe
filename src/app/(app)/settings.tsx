@@ -13,6 +13,7 @@ import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 
 type SharingLevel = 'off' | 'country' | 'city';
+type HostingStatus = 'none' | 'can_host' | 'seeking_stay';
 
 const LEVEL_OPTIONS: { label: string; value: SharingLevel }[] = [
   { label: 'Off', value: 'off' },
@@ -26,6 +27,12 @@ const LEVEL_HELP: Record<SharingLevel, string> = {
   city: 'City — friends see something like Paris, France.',
 };
 
+const HOSTING_OPTIONS: { label: string; value: HostingStatus }[] = [
+  { label: 'Not now', value: 'none' },
+  { label: 'Can host', value: 'can_host' },
+  { label: 'Need a stay', value: 'seeking_stay' },
+];
+
 export default function SettingsScreen() {
   const { session, profile, refreshProfile } = useAuth();
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -35,6 +42,8 @@ export default function SettingsScreen() {
   const [draftWhatsapp, setDraftWhatsapp] = useState('');
   const [draftSocial, setDraftSocial] = useState('');
   const [draftMessage, setDraftMessage] = useState('');
+  const [extendedOpen, setExtendedOpen] = useState(false);
+  const [draftHostingNote, setDraftHostingNote] = useState('');
 
   useEffect(() => {
     // One-time sync from the async-loaded profile into locally-owned
@@ -43,6 +52,7 @@ export default function SettingsScreen() {
     setDraftWhatsapp(profile?.whatsapp_number ?? '');
     setDraftSocial(profile?.social_handle ?? '');
     setDraftMessage(profile?.contact_message ?? '');
+    setDraftHostingNote(profile?.hosting_note ?? '');
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [profile]);
 
@@ -168,6 +178,20 @@ export default function SettingsScreen() {
     await refreshProfile();
   }
 
+  async function handleHostingStatusChange(next: HostingStatus) {
+    await supabase.from('profiles').update({ hosting_status: next }).eq('id', session!.user.id);
+    await refreshProfile();
+  }
+
+  async function handleHostingNoteBlur() {
+    if (draftHostingNote === (profile!.hosting_note ?? '')) return;
+    await supabase
+      .from('profiles')
+      .update({ hosting_note: draftHostingNote || null })
+      .eq('id', session!.user.id);
+    await refreshProfile();
+  }
+
   async function handleContactBlur() {
     if (
       draftWhatsapp === (profile!.whatsapp_number ?? '') &&
@@ -278,6 +302,43 @@ export default function SettingsScreen() {
               multiline
               style={styles.messageInput}
             />
+          </View>
+
+          <View style={styles.section}>
+            <Button
+              label={extendedOpen ? 'Hide extended options' : 'Extended options'}
+              variant="ghost"
+              onPress={() => setExtendedOpen((open) => !open)}
+            />
+            {extendedOpen && (
+              <View style={styles.section}>
+                <ThemedText style={styles.sectionLabel}>Hosting</ThemedText>
+                <ThemedText themeColor="textSecondary" style={styles.help}>
+                  Tied to wherever your current or home location says. Shown to friends
+                  you&apos;re connected with.
+                </ThemedText>
+                <SegmentedControl
+                  options={HOSTING_OPTIONS}
+                  value={profile.hosting_status}
+                  onChange={handleHostingStatusChange}
+                />
+                {profile.hosting_status !== 'none' && (
+                  <TextField
+                    label="Note"
+                    value={draftHostingNote}
+                    onChangeText={setDraftHostingNote}
+                    onBlur={handleHostingNoteBlur}
+                    placeholder={
+                      profile.hosting_status === 'can_host'
+                        ? 'Have a spare room, no pets please'
+                        : 'Passing through for a week, any tips welcome'
+                    }
+                    multiline
+                    style={styles.messageInput}
+                  />
+                )}
+              </View>
+            )}
           </View>
 
           <Button label="Log out" variant="ghost" onPress={() => supabase.auth.signOut()} />
