@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
 
 import { Spacing } from '@/constants/theme';
@@ -8,8 +9,9 @@ type TextFieldProps = TextInputProps & {
   error?: string;
 };
 
-export function TextField({ label, error, style, ...rest }: TextFieldProps) {
+export function TextField({ label, error, style, onFocus, onBlur, ...rest }: TextFieldProps) {
   const theme = useTheme();
+  const [focused, setFocused] = useState(false);
 
   return (
     <View style={styles.wrap}>
@@ -17,12 +19,25 @@ export function TextField({ label, error, style, ...rest }: TextFieldProps) {
       <TextInput
         style={[
           styles.input,
-          { borderColor: theme.line, color: theme.text, backgroundColor: theme.backgroundElement },
+          {
+            borderColor: focused ? theme.accent : theme.line,
+            borderWidth: focused ? 2 : 1,
+            color: theme.text,
+            backgroundColor: theme.backgroundElement,
+          },
           style,
         ]}
         placeholderTextColor={theme.textSecondary}
         autoCapitalize="none"
         autoCorrect={false}
+        onFocus={(e) => {
+          setFocused(true);
+          onFocus?.(e);
+        }}
+        onBlur={(e) => {
+          setFocused(false);
+          onBlur?.(e);
+        }}
         {...rest}
       />
       {error ? <Text style={[styles.error, { color: theme.danger }]}>{error}</Text> : null}
@@ -36,14 +51,14 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 12,
+    fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
   },
   input: {
-    borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 12,
     paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
+    paddingVertical: Spacing.two + 2,
     fontSize: 16,
   },
   error: {

@@ -31,9 +31,14 @@ export function FriendListItem({ friend, onPress }: FriendListItemProps) {
       onPress={onPress}
       style={({ pressed }) => [
         styles.row,
-        { borderColor: theme.line, opacity: pressed ? 0.7 : 1 },
+        {
+          backgroundColor: theme.backgroundElement,
+          shadowColor: theme.text,
+          transform: [{ scale: pressed ? 0.98 : 1 }],
+          opacity: pressed ? 0.9 : 1,
+        },
       ]}>
-      <View style={[styles.avatar, { backgroundColor: theme.backgroundSelected }]}>
+      <View style={[styles.avatar, { backgroundColor: theme.backgroundSelected, borderColor: theme.line }]}>
         <Text style={[styles.avatarLabel, { color: theme.accent }]}>{initials(name)}</Text>
       </View>
       <View style={styles.body}>
@@ -53,30 +58,36 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.two,
-    paddingVertical: Spacing.two,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    gap: Spacing.three,
+    padding: Spacing.three,
+    marginBottom: Spacing.two,
+    borderRadius: 16,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 1,
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarLabel: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '700',
   },
   body: {
     flex: 1,
-    gap: 3,
+    gap: 4,
   },
   name: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
   },
   chevron: {
-    fontSize: 18,
+    fontSize: 20,
   },
 });

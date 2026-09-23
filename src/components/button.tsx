@@ -22,17 +22,21 @@ export function Button({ label, variant = 'primary', loading, disabled, ...rest 
   // than adding a redundant token.
   const textColor =
     variant === 'primary' || variant === 'danger' ? theme.backgroundElement : theme.text;
+  const elevated = variant === 'primary' || variant === 'danger';
 
   return (
     <Pressable
       disabled={disabled || loading}
       style={({ pressed }) => [
         styles.base,
+        elevated && styles.elevated,
+        elevated && { shadowColor: backgroundColor },
         {
           backgroundColor,
           borderColor: theme.line,
           borderWidth: variant === 'outline' ? 1 : 0,
-          opacity: pressed ? 0.75 : disabled ? 0.5 : 1,
+          opacity: disabled ? 0.5 : 1,
+          transform: [{ scale: pressed ? 0.97 : 1 }],
         },
       ]}
       {...rest}>
@@ -49,13 +53,20 @@ export function Button({ label, variant = 'primary', loading, disabled, ...rest 
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: 10,
-    paddingVertical: Spacing.two + 2,
+    borderRadius: 14,
+    paddingVertical: Spacing.two + 4,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  elevated: {
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 3,
+  },
   label: {
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
 });

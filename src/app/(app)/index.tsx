@@ -23,9 +23,16 @@ export default function FriendsScreen() {
           </ThemedText>
           <Pressable
             onPress={() => router.push('/(app)/connect')}
-            style={[styles.addButton, { backgroundColor: theme.backgroundSelected }]}
+            style={({ pressed }) => [
+              styles.addButton,
+              {
+                backgroundColor: theme.accent,
+                shadowColor: theme.accent,
+                transform: [{ scale: pressed ? 0.94 : 1 }],
+              },
+            ]}
             accessibilityLabel="Add a friend">
-            <Text style={[styles.addButtonLabel, { color: theme.accent }]}>+</Text>
+            <Text style={[styles.addButtonLabel, { color: theme.backgroundElement }]}>+</Text>
           </Pressable>
         </View>
 
@@ -76,16 +83,20 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   addButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 3,
   },
   addButtonLabel: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
-    lineHeight: 20,
+    lineHeight: 22,
   },
   list: {
     paddingHorizontal: Spacing.four,
