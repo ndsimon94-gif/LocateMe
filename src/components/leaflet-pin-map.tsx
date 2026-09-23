@@ -1,6 +1,5 @@
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useMemo } from 'react';
 import { MapContainer, Marker, TileLayer } from 'react-leaflet';
 
 export type PinGroupBase = {
@@ -27,20 +26,13 @@ export function LeafletPinMap<T extends PinGroupBase>({
   pinColor,
   pinTextColor,
 }: LeafletPinMapProps<T>) {
-  const iconFor = useMemo(() => {
-    const cache = new Map<number, L.DivIcon>();
-    return (count: number) => {
-      const cached = cache.get(count);
-      if (cached) return cached;
-      const icon = L.divIcon({
-        className: 'orbit-pin',
-        html: `<div style="width:28px;height:28px;border-radius:14px;background:${pinColor};border:2px solid ${pinTextColor};display:flex;align-items:center;justify-content:center;color:${pinTextColor};font-size:12px;font-weight:700;font-family:-apple-system,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,0.25);">${count}</div>`,
-        iconSize: [28, 28],
-      });
-      cache.set(count, icon);
-      return icon;
-    };
-  }, [pinColor, pinTextColor]);
+  function iconFor(count: number) {
+    return L.divIcon({
+      className: 'orbit-pin',
+      html: `<div style="width:28px;height:28px;border-radius:14px;background:${pinColor};border:2px solid ${pinTextColor};display:flex;align-items:center;justify-content:center;color:${pinTextColor};font-size:12px;font-weight:700;font-family:-apple-system,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,0.25);">${count}</div>`,
+      iconSize: [28, 28],
+    });
+  }
 
   return (
     <MapContainer

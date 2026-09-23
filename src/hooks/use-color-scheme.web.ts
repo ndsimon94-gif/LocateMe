@@ -10,6 +10,9 @@ export function useColorScheme() {
   useEffect(() => {
     // Marks the client render as hydrated so web can re-derive the OS color
     // scheme after the static/server render, which always assumes 'light'.
+    // There's no way to know this without an effect: it's the one-time
+    // "did we reach the client" signal hydration-safe rendering needs.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHasHydrated(true);
   }, []);
 

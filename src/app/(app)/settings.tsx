@@ -35,9 +35,13 @@ export default function SettingsScreen() {
   const [draftMessage, setDraftMessage] = useState('');
 
   useEffect(() => {
+    // One-time sync from the async-loaded profile into locally-owned
+    // editable draft text, not derived state.
+    /* eslint-disable react-hooks/set-state-in-effect */
     setDraftWhatsapp(profile?.whatsapp_number ?? '');
     setDraftSocial(profile?.social_handle ?? '');
     setDraftMessage(profile?.contact_message ?? '');
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [profile]);
 
   useEffect(() => {
