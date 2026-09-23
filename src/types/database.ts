@@ -9,6 +9,11 @@ export type PlaceReason =
   | { type: 'met_there' }
   | { type: 'past_trip'; date: string };
 
+export type OrbitTextMatch = {
+  field: 'name' | 'met' | 'met_location' | 'note' | 'tag' | 'recommendation' | 'home' | 'hosting';
+  snippet: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -504,6 +509,15 @@ export type Database = {
           overlap_start: string;
           overlap_end: string;
           overlap_days: number;
+        }[];
+      };
+      search_orbit_text: {
+        Args: { p_query: string };
+        Returns: {
+          friend_id: string;
+          friendship_id: string;
+          name: string | null;
+          matches: OrbitTextMatch[];
         }[];
       };
       search_orbit_by_place: {

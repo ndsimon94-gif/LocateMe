@@ -21,19 +21,30 @@ export default function FriendsScreen() {
           <ThemedText type="title" style={styles.title}>
             Friends
           </ThemedText>
-          <Pressable
-            onPress={() => router.push('/(app)/connect')}
-            style={({ pressed }) => [
-              styles.addButton,
-              {
-                backgroundColor: theme.accent,
-                shadowColor: theme.accent,
-                transform: [{ scale: pressed ? 0.94 : 1 }],
-              },
-            ]}
-            accessibilityLabel="Add a friend">
-            <Text style={[styles.addButtonLabel, { color: theme.backgroundElement }]}>+</Text>
-          </Pressable>
+          <View style={styles.headerButtons}>
+            <Pressable
+              onPress={() => router.push('/(app)/ask')}
+              style={({ pressed }) => [
+                styles.askButton,
+                { borderColor: theme.line, opacity: pressed ? 0.7 : 1 },
+              ]}
+              accessibilityLabel="Ask your Orbit">
+              <Text style={[styles.askButtonLabel, { color: theme.textSecondary }]}>Ask</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => router.push('/(app)/connect')}
+              style={({ pressed }) => [
+                styles.addButton,
+                {
+                  backgroundColor: theme.accent,
+                  shadowColor: theme.accent,
+                  transform: [{ scale: pressed ? 0.94 : 1 }],
+                },
+              ]}
+              accessibilityLabel="Add a friend">
+              <Text style={[styles.addButtonLabel, { color: theme.backgroundElement }]}>+</Text>
+            </Pressable>
+          </View>
         </View>
 
         {!isLoading && friends.length === 0 ? (
@@ -81,6 +92,21 @@ const styles = StyleSheet.create({
   },
   title: {
     textAlign: 'left',
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  askButton: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two - 2,
+  },
+  askButtonLabel: {
+    fontSize: 13,
+    fontWeight: '600',
   },
   addButton: {
     width: 36,
