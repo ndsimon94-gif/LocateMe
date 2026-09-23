@@ -1,6 +1,6 @@
 import { Link } from 'expo-router';
-import { useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { FlatList, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
@@ -12,8 +12,9 @@ import { ThemedView } from '@/components/themed-view';
 import { TripCard } from '@/components/trip-card';
 import { Spacing } from '@/constants/theme';
 import { useFriendshipHistory } from '@/hooks/use-friendship-history';
-import { useUpcomingTrips } from '@/hooks/use-upcoming-trips';
+import { useItineraries } from '@/hooks/use-itineraries';
 import { formatDate, formatDateRange } from '@/lib/format-date';
+import { groupStopsByItinerary } from '@/lib/itineraries';
 
 type Segment = 'upcoming' | 'history';
 type HistoryView = 'list' | 'map';
@@ -31,7 +32,8 @@ const HISTORY_VIEW_OPTIONS: { label: string; value: HistoryView }[] = [
 export default function TripsScreen() {
   const [segment, setSegment] = useState<Segment>('upcoming');
   const [historyView, setHistoryView] = useState<HistoryView>('list');
-  const { trips, isLoading, refresh } = useUpcomingTrips();
+  const { stops, isLoading, refresh } = useItineraries();
+  const itineraries = useMemo(() => groupStopsByItinerary(stops), [stops]);
   const {
     entries: historyEntries,
     isLoading: historyLoading,
@@ -51,7 +53,7 @@ export default function TripsScreen() {
 
         {segment === 'upcoming' ? (
           <View style={styles.body}>
-            {!isLoading && trips.length === 0 ? (
+            {!isLoading && itineraries.length === 0 ? (
               <View style={styles.empty}>
                 <ThemedText type="subtitle" style={styles.emptyTitle}>
                   No trips yet
@@ -61,22 +63,28 @@ export default function TripsScreen() {
                 </ThemedText>
               </View>
             ) : (
-              <FlatList
+              <ScrollView
                 style={styles.listFlex}
-                data={trips}
-                keyExtractor={(item) => item.trip_id}
                 contentContainerStyle={styles.list}
-                onRefresh={refresh}
-                refreshing={isLoading}
-                ItemSeparatorComponent={() => <View style={styles.separator} />}
-                renderItem={({ item }) => (
-                  <TripCard
-                    destination={`${item.city_name}, ${item.country_name}`}
-                    dateRange={formatDateRange(item.start_date, item.end_date)}
-                    overlapNames={item.overlap_friend_names}
-                  />
-                )}
-              />
+                refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refresh} />}>
+                {itineraries.map((itinerary) => (
+                  <View key={itinerary.itineraryId} style={styles.itineraryGroup}>
+                    {itinerary.title && (
+                      <ThemedText style={styles.itineraryTitle}>{itinerary.title}</ThemedText>
+                    )}
+                    <View style={styles.stopList}>
+                      {itinerary.stops.map((stop) => (
+                        <TripCard
+                          key={stop.stop_id}
+                          destination={`${stop.city_name}, ${stop.country_name}`}
+                          dateRange={formatDateRange(stop.start_date, stop.end_date)}
+                          connections={stop.connections}
+                        />
+                      ))}
+                    </View>
+                  </View>
+                ))}
+              </ScrollView>
             )}
             <Link href="/(app)/trips/add" asChild>
               <Button label="+ Add a trip" variant="outline" />
@@ -151,8 +159,16 @@ const styles = StyleSheet.create({
   list: {
     paddingBottom: Spacing.two,
   },
-  separator: {
-    height: Spacing.two,
+  itineraryGroup: {
+    gap: Spacing.two,
+    marginBottom: Spacing.three,
+  },
+  itineraryTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  stopList: {
+    gap: Spacing.two,
   },
   empty: {
     flex: 1,

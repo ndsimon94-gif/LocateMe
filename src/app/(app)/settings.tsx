@@ -30,6 +30,8 @@ export default function SettingsScreen() {
   const { session, profile, refreshProfile } = useAuth();
   const [pickerOpen, setPickerOpen] = useState(false);
   const [currentLabel, setCurrentLabel] = useState<string | null>(null);
+  const [homePickerOpen, setHomePickerOpen] = useState(false);
+  const [homeLabel, setHomeLabel] = useState<string | null>(null);
   const [draftWhatsapp, setDraftWhatsapp] = useState('');
   const [draftSocial, setDraftSocial] = useState('');
   const [draftMessage, setDraftMessage] = useState('');
@@ -77,6 +79,30 @@ export default function SettingsScreen() {
     };
   }, [profile]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadHomeLabel() {
+      if (!profile?.home_city_id) {
+        setHomeLabel(null);
+        return;
+      }
+      const { data } = await supabase
+        .from('cities')
+        .select('name, countries ( name )')
+        .eq('id', profile.home_city_id)
+        .single();
+      if (cancelled) return;
+      const row = data as unknown as { name: string; countries: { name: string } | null } | null;
+      setHomeLabel(row ? `${row.name}, ${row.countries?.name ?? ''}` : null);
+    }
+
+    loadHomeLabel();
+    return () => {
+      cancelled = true;
+    };
+  }, [profile?.home_city_id]);
+
   if (!session || !profile) return null;
 
   const level = profile.location_sharing_default;
@@ -122,6 +148,24 @@ export default function SettingsScreen() {
     await supabase.from('profiles').update(patch).eq('id', session!.user.id);
     await refreshProfile();
     setPickerOpen(false);
+  }
+
+  async function handleHomeSelect(selection: LocationSelection) {
+    if (selection.level !== 'city') return;
+    await supabase
+      .from('profiles')
+      .update({ home_city_id: selection.cityId, home_country_code: selection.countryCode })
+      .eq('id', session!.user.id);
+    await refreshProfile();
+    setHomePickerOpen(false);
+  }
+
+  async function handleHomeClear() {
+    await supabase
+      .from('profiles')
+      .update({ home_city_id: null, home_country_code: null })
+      .eq('id', session!.user.id);
+    await refreshProfile();
   }
 
   async function handleContactBlur() {
@@ -179,6 +223,30 @@ export default function SettingsScreen() {
             {pickerOpen && level !== 'off' && (
               <LocationPicker mode={level} onSelect={handleLocationSelect} />
             )}
+          </View>
+
+          <View style={styles.section}>
+            <ThemedText style={styles.sectionLabel}>Home base</ThemedText>
+            <ThemedText themeColor="textSecondary" style={styles.help}>
+              Where you live, separate from where you currently are. Shown to friends you&apos;re
+              connected with.
+            </ThemedText>
+            <View style={styles.locationRow}>
+              <ThemedText themeColor="textSecondary">
+                {homeLabel ? homeLabel : 'Not set yet'}
+              </ThemedText>
+              <View style={styles.homeButtons}>
+                {homeLabel && (
+                  <Button label="Clear" variant="ghost" onPress={handleHomeClear} />
+                )}
+                <Button
+                  label={homeLabel ? 'Change' : 'Set home base'}
+                  variant="outline"
+                  onPress={() => setHomePickerOpen((open) => !open)}
+                />
+              </View>
+            </View>
+            {homePickerOpen && <LocationPicker mode="city" onSelect={handleHomeSelect} />}
           </View>
 
           <View style={styles.section}>
@@ -251,6 +319,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: Spacing.two,
+  },
+  homeButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   messageInput: {
     minHeight: 72,

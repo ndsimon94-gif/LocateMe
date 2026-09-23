@@ -2,62 +2,87 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import type { ItineraryStop } from '@/lib/itineraries';
+
+type Connection = ItineraryStop['connections'][number];
 
 type TripCardProps = {
   destination: string;
   dateRange: string;
-  overlapNames: string[];
+  connections: Connection[];
 };
 
-export function TripCard({ destination, dateRange, overlapNames }: TripCardProps) {
-  const theme = useTheme();
-  const hasOverlap = overlapNames.length > 0;
+const REASON_LABEL: Record<Connection['reason'], string> = {
+  'currently there': 'is there now',
+  'lives there': 'is based there',
+  'visiting then': 'will be visiting too',
+};
 
-  const badgeText = hasOverlap
-    ? overlapNames.length === 1
-      ? `${overlapNames[0]} will be there`
-      : `${overlapNames[0]} & ${overlapNames.length - 1} other${overlapNames.length > 2 ? 's' : ''} will be there`
-    : "You'll be the only one there, for now.";
+export function TripCard({ destination, dateRange, connections }: TripCardProps) {
+  const theme = useTheme();
+  const hasConnections = connections.length > 0;
 
   return (
-    <View style={[styles.card, { borderColor: theme.line }]}>
+    <View style={[styles.card, { backgroundColor: theme.backgroundElement, shadowColor: theme.text }]}>
       <Text style={[styles.dest, { color: theme.text }]}>{destination}</Text>
       <Text style={[styles.dates, { color: theme.textSecondary }]}>{dateRange}</Text>
-      <View
-        style={[
-          styles.badge,
-          hasOverlap
-            ? { backgroundColor: theme.backgroundSelected }
-            : { borderWidth: 1, borderStyle: 'dashed', borderColor: theme.line },
-        ]}>
-        <Text style={[styles.badgeLabel, { color: hasOverlap ? theme.accent : theme.textSecondary }]}>
-          {badgeText}
-        </Text>
-      </View>
+
+      {hasConnections ? (
+        <View style={styles.connections}>
+          {connections.map((c) => (
+            <View
+              key={`${c.name}-${c.reason}`}
+              style={[styles.badge, { backgroundColor: theme.backgroundSelected }]}>
+              <Text style={[styles.badgeLabel, { color: theme.accent }]}>
+                {c.name} {REASON_LABEL[c.reason]}
+              </Text>
+            </View>
+          ))}
+        </View>
+      ) : (
+        <View style={[styles.badge, styles.emptyBadge, { borderColor: theme.line }]}>
+          <Text style={[styles.badgeLabel, { color: theme.textSecondary }]}>
+            No connections there yet.
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 16,
     padding: Spacing.three,
     gap: Spacing.one,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 1,
   },
   dest: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
   },
   dates: {
     fontSize: 12,
     fontVariant: ['tabular-nums'],
   },
+  connections: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.one,
+    marginTop: Spacing.one,
+  },
   badge: {
     alignSelf: 'flex-start',
     borderRadius: 999,
     paddingHorizontal: 10,
-    paddingVertical: 3,
+    paddingVertical: 4,
+  },
+  emptyBadge: {
+    borderWidth: 1,
+    borderStyle: 'dashed',
     marginTop: Spacing.one,
   },
   badgeLabel: {

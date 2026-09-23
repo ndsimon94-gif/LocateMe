@@ -124,6 +124,12 @@ export default function FriendDetailScreen() {
               countryName={friend.country_name}
               cityName={friend.city_name}
             />
+            {(friend.home_city_name || friend.home_country_name) && (
+              <ThemedText themeColor="textSecondary" style={styles.homeBase}>
+                Lives in {friend.home_city_name ? `${friend.home_city_name}, ` : ''}
+                {friend.home_country_name}
+              </ThemedText>
+            )}
             <Button label="Message" onPress={() => router.push(`/(app)/chat/${friendshipId}`)} />
           </View>
 
@@ -308,5 +314,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  homeBase: {
+    fontSize: 13,
   },
 });

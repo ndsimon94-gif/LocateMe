@@ -16,6 +16,8 @@ export type Database = {
           whatsapp_number: string | null;
           social_handle: string | null;
           contact_message: string | null;
+          home_country_code: string | null;
+          home_city_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -29,6 +31,8 @@ export type Database = {
           whatsapp_number?: string | null;
           social_handle?: string | null;
           contact_message?: string | null;
+          home_country_code?: string | null;
+          home_city_id?: string | null;
           created_at?: string;
         };
         Update: {
@@ -42,6 +46,8 @@ export type Database = {
           whatsapp_number?: string | null;
           social_handle?: string | null;
           contact_message?: string | null;
+          home_country_code?: string | null;
+          home_city_id?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -315,33 +321,51 @@ export type Database = {
         };
         Relationships: [];
       };
-      trips: {
+      trip_itineraries: {
         Row: {
           id: string;
           owner_id: string;
-          city_id: string;
-          country_code: string;
-          start_date: string;
-          end_date: string;
+          title: string | null;
           created_at: string;
         };
         Insert: {
           id?: string;
           owner_id: string;
-          city_id: string;
-          country_code: string;
-          start_date: string;
-          end_date: string;
+          title?: string | null;
           created_at?: string;
         };
         Update: {
           id?: string;
           owner_id?: string;
+          title?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      trip_stops: {
+        Row: {
+          id: string;
+          itinerary_id: string;
+          city_id: string;
+          country_code: string;
+          start_date: string;
+          end_date: string;
+        };
+        Insert: {
+          id?: string;
+          itinerary_id: string;
+          city_id: string;
+          country_code: string;
+          start_date: string;
+          end_date: string;
+        };
+        Update: {
+          id?: string;
+          itinerary_id?: string;
           city_id?: string;
           country_code?: string;
           start_date?: string;
           end_date?: string;
-          created_at?: string;
         };
         Relationships: [];
       };
@@ -377,19 +401,25 @@ export type Database = {
           whatsapp_number: string | null;
           social_handle: string | null;
           contact_message: string | null;
+          home_country_code: string | null;
+          home_country_name: string | null;
+          home_city_id: string | null;
+          home_city_name: string | null;
         }[];
       };
-      get_upcoming_trips_with_overlap: {
+      get_my_itineraries_with_connections: {
         Args: Record<string, never>;
         Returns: {
-          trip_id: string;
+          itinerary_id: string;
+          title: string | null;
+          stop_id: string;
           city_id: string;
           city_name: string;
           country_code: string;
           country_name: string;
           start_date: string;
           end_date: string;
-          overlap_friend_names: string[];
+          connections: { name: string; reason: 'currently there' | 'lives there' | 'visiting then' }[];
         }[];
       };
       get_friendship_history: {
