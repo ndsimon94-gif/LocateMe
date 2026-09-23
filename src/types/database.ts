@@ -338,6 +338,33 @@ export type Database = {
         };
         Relationships: [];
       };
+      friend_recommendations: {
+        Row: {
+          id: string;
+          friendship_id: string;
+          author_id: string;
+          place: string;
+          note: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          friendship_id: string;
+          author_id: string;
+          place: string;
+          note?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          friendship_id?: string;
+          author_id?: string;
+          place?: string;
+          note?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       trip_itineraries: {
         Row: {
           id: string;

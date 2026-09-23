@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
@@ -13,6 +13,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useFriendDetail } from '@/hooks/use-friend-detail';
+import { useFriendRecommendations } from '@/hooks/use-friend-recommendations';
 import { useFriendshipPhotos } from '@/hooks/use-friendship-photos';
 import { useFriendsWithLocation } from '@/hooks/use-friends-with-location';
 import { useTheme } from '@/hooks/use-theme';
@@ -43,11 +44,15 @@ export default function FriendDetailScreen() {
     removePhoto,
     myUserId,
   } = useFriendshipPhotos(friendshipId);
+  const { recommendations, addRecommendation, removeRecommendation } =
+    useFriendRecommendations(friendshipId);
 
   const friend = friends.find((item) => item.friendship_id === friendshipId);
   const [draftNote, setDraftNote] = useState('');
   const [draftRememberAs, setDraftRememberAs] = useState('');
   const [draftPlace, setDraftPlace] = useState('');
+  const [newRecPlace, setNewRecPlace] = useState('');
+  const [newRecNote, setNewRecNote] = useState('');
   const [draftStory, setDraftStory] = useState('');
   const [newTag, setNewTag] = useState('');
 
@@ -83,6 +88,13 @@ export default function FriendDetailScreen() {
     if (!newTag.trim()) return;
     addTag(newTag);
     setNewTag('');
+  }
+
+  function handleAddRecommendation() {
+    if (!newRecPlace.trim()) return;
+    addRecommendation(newRecPlace, newRecNote);
+    setNewRecPlace('');
+    setNewRecNote('');
   }
 
   function handleStoryBlur() {
@@ -222,6 +234,42 @@ export default function FriendDetailScreen() {
                 Long-press a photo to remove one you added.
               </ThemedText>
             )}
+          </View>
+
+          <View style={styles.section}>
+            <ThemedText style={styles.sectionLabel}>Recommendations</ThemedText>
+            <ThemedText themeColor="textSecondary" style={styles.sectionHint}>
+              Places either of you have suggested to the other.
+            </ThemedText>
+            {recommendations.map((rec) => (
+              <Pressable
+                key={rec.id}
+                onLongPress={() => rec.author_id === myUserId && removeRecommendation(rec.id)}
+                style={[styles.recRow, { borderColor: theme.line }]}>
+                <ThemedText style={styles.recPlace}>{rec.place}</ThemedText>
+                {rec.note && (
+                  <ThemedText themeColor="textSecondary" style={styles.recNote}>
+                    {rec.note}
+                  </ThemedText>
+                )}
+                <ThemedText themeColor="textSecondary" style={styles.recAuthor}>
+                  {rec.author_id === myUserId ? 'You suggested this' : `${name} suggested this`}
+                </ThemedText>
+              </Pressable>
+            ))}
+            <TextField
+              value={newRecPlace}
+              onChangeText={setNewRecPlace}
+              placeholder="A place — a guesthouse, a hike, a café"
+            />
+            <TextField
+              value={newRecNote}
+              onChangeText={setNewRecNote}
+              onSubmitEditing={handleAddRecommendation}
+              placeholder="Optional note"
+              returnKeyType="done"
+            />
+            <Button label="Add recommendation" variant="outline" onPress={handleAddRecommendation} />
           </View>
 
           <View style={styles.section}>
@@ -368,5 +416,23 @@ const styles = StyleSheet.create({
     fontSize: 13,
     textAlign: 'center',
     paddingHorizontal: Spacing.four,
+  },
+  recRow: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: Spacing.two,
+    gap: 2,
+  },
+  recPlace: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  recNote: {
+    fontSize: 13,
+  },
+  recAuthor: {
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
   },
 });
