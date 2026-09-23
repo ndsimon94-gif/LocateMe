@@ -346,6 +346,27 @@ export type Database = {
         };
         Relationships: [];
       };
+      nearby_dismissals: {
+        Row: {
+          user_id: string;
+          friend_id: string;
+          city_id: string;
+          created_at: string;
+        };
+        Insert: {
+          user_id: string;
+          friend_id: string;
+          city_id: string;
+          created_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          friend_id?: string;
+          city_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       friend_recommendations: {
         Row: {
           id: string;
@@ -498,6 +519,7 @@ export type Database = {
         Args: Record<string, never>;
         Returns: {
           friend_id: string;
+          friendship_id: string;
           friend_name: string | null;
           city_id: string;
           city_name: string;

@@ -38,7 +38,7 @@ export default function TripsScreen() {
   const [historyView, setHistoryView] = useState<HistoryView>('list');
   const { stops, isLoading, refresh } = useItineraries();
   const itineraries = useMemo(() => groupStopsByItinerary(stops), [stops]);
-  const { paths: crossingPaths } = useCrossingPaths();
+  const { paths: crossingPaths, dismissForNow, hidePermanently } = useCrossingPaths();
   const {
     entries: historyEntries,
     isLoading: historyLoading,
@@ -76,7 +76,12 @@ export default function TripsScreen() {
                 {crossingPaths.length > 0 && (
                   <View style={styles.crossingPathsList}>
                     {crossingPaths.map((path) => (
-                      <CrossingPathCard key={`${path.friend_id}-${path.city_id}`} path={path} />
+                      <CrossingPathCard
+                        key={`${path.friend_id}-${path.city_id}`}
+                        path={path}
+                        onDismiss={() => dismissForNow(path.friend_id, path.city_id)}
+                        onHide={() => hidePermanently(path.friend_id, path.city_id)}
+                      />
                     ))}
                   </View>
                 )}

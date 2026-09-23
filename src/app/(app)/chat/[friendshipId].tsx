@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -17,13 +17,26 @@ import type { Database } from '@/types/database';
 type Message = Database['public']['Tables']['messages']['Row'];
 
 export default function ChatScreen() {
-  const { friendshipId } = useLocalSearchParams<{ friendshipId: string }>();
+  const { friendshipId, draft: draftParam } = useLocalSearchParams<{
+    friendshipId: string;
+    draft?: string;
+  }>();
   const theme = useTheme();
   const { friends } = useFriendsWithLocation();
   const friend = friends.find((item) => item.friendship_id === friendshipId);
   const { messages, isLoading, sendMessage, myUserId } = useConversationMessages(friendshipId);
   const [draft, setDraft] = useState('');
   const listRef = useRef<FlatList<Message>>(null);
+
+  useEffect(() => {
+    if (draftParam) {
+      // One-time seed from the route param that opened this screen, not a
+      // live subscription to further param changes.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDraft(draftParam);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (isLoading) return <LoadingScreen />;
 
