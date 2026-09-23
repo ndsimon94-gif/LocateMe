@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { FlatList, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AnniversaryCard } from '@/components/anniversary-card';
 import { Button } from '@/components/button';
 import { HistoryMap } from '@/components/history-map';
 import { SegmentedControl } from '@/components/segmented-control';
@@ -13,6 +14,7 @@ import { TripCard } from '@/components/trip-card';
 import { Spacing } from '@/constants/theme';
 import { useFriendshipHistory } from '@/hooks/use-friendship-history';
 import { useItineraries } from '@/hooks/use-itineraries';
+import { findAnniversaries } from '@/lib/anniversaries';
 import { formatDate, formatDateRange } from '@/lib/format-date';
 import { groupStopsByItinerary } from '@/lib/itineraries';
 
@@ -39,6 +41,7 @@ export default function TripsScreen() {
     isLoading: historyLoading,
     refresh: refreshHistory,
   } = useFriendshipHistory();
+  const anniversaries = useMemo(() => findAnniversaries(historyEntries), [historyEntries]);
 
   return (
     <ThemedView style={styles.container}>
@@ -101,6 +104,13 @@ export default function TripsScreen() {
           </View>
         ) : (
           <View style={styles.body}>
+            {anniversaries.length > 0 && (
+              <View style={styles.anniversaryList}>
+                {anniversaries.map((anniversary) => (
+                  <AnniversaryCard key={anniversary.entry.friendship_id} {...anniversary} />
+                ))}
+              </View>
+            )}
             <SegmentedControl
               options={HISTORY_VIEW_OPTIONS}
               value={historyView}
@@ -162,6 +172,9 @@ const styles = StyleSheet.create({
   itineraryGroup: {
     gap: Spacing.two,
     marginBottom: Spacing.three,
+  },
+  anniversaryList: {
+    gap: Spacing.two,
   },
   itineraryTitle: {
     fontSize: 14,
