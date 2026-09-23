@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -30,24 +30,75 @@ function reasonLabel(reason: PlaceReason): string {
 
 export default function PlaceSearchScreen() {
   const theme = useTheme();
+  const params = useLocalSearchParams<{ countryCode?: string; countryName?: string; cityName?: string }>();
   const [place, setPlace] = useState<LocationSelection | null>(null);
   const { results, isLoading, search } = usePlaceSearch();
+
+  useEffect(() => {
+    if (params.countryCode && params.countryName) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPlace({ level: 'country', countryCode: params.countryCode, countryName: params.countryName });
+      search(params.countryCode);
+    }
+    // Only meant to run once, from whatever params this screen was opened
+    // with — not a live subscription to further param changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const summary = useMemo(() => {
+    if (!results) return null;
+    const livesCount = results.filter((r) => r.reasons.some((x) => x.type === 'lives_there')).length;
+    const currentlyCount = results.filter((r) =>
+      r.reasons.some((x) => x.type === 'currently_there'),
+    ).length;
+    const arriving = results.filter((r) => r.reasons.some((x) => x.type === 'upcoming_trip'));
+    const pastCount = results.filter((r) => r.reasons.some((x) => x.type === 'past_trip')).length;
+    if (livesCount === 0 && currentlyCount === 0 && arriving.length === 0 && pastCount === 0) return null;
+    return { livesCount, currentlyCount, arrivingCount: arriving.length, pastCount };
+  }, [results]);
 
   function handleSelect(selection: LocationSelection) {
     setPlace(selection);
     search(selection.countryCode);
   }
 
+  const displayName = params.cityName ?? place?.countryName;
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <ThemedText type="title" style={styles.title}>
-            Your Orbit
+            {displayName ? `Your Orbit in ${displayName}` : 'Your Orbit'}
           </ThemedText>
           <ThemedText themeColor="textSecondary" style={styles.subtitle}>
             Type a country and see who in your Orbit connects to it.
           </ThemedText>
+
+          {summary && (
+            <View style={[styles.summary, { backgroundColor: theme.backgroundSelected }]}>
+              {summary.livesCount > 0 && (
+                <Text style={[styles.summaryLine, { color: theme.text }]}>
+                  {summary.livesCount} friend{summary.livesCount === 1 ? '' : 's'} live{summary.livesCount === 1 ? 's' : ''} here
+                </Text>
+              )}
+              {summary.currentlyCount > 0 && (
+                <Text style={[styles.summaryLine, { color: theme.text }]}>
+                  {summary.currentlyCount} friend{summary.currentlyCount === 1 ? '' : 's'} {summary.currentlyCount === 1 ? 'is' : 'are'} currently here
+                </Text>
+              )}
+              {summary.arrivingCount > 0 && (
+                <Text style={[styles.summaryLine, { color: theme.text }]}>
+                  {summary.arrivingCount} friend{summary.arrivingCount === 1 ? '' : 's'} arriving soon
+                </Text>
+              )}
+              {summary.pastCount > 0 && (
+                <Text style={[styles.summaryLine, { color: theme.text }]}>
+                  {summary.pastCount} friend{summary.pastCount === 1 ? '' : 's'} spent time here before
+                </Text>
+              )}
+            </View>
+          )}
 
           {place ? (
             <View style={styles.placeRow}>
@@ -122,6 +173,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  summary: {
+    borderRadius: 16,
+    padding: Spacing.three,
+    gap: 4,
+  },
+  summaryLine: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   empty: {
     paddingVertical: Spacing.five,

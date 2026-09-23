@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -10,6 +10,7 @@ type TripCardProps = {
   destination: string;
   dateRange: string;
   connections: Connection[];
+  onPress?: () => void;
 };
 
 const REASON_LABEL: Record<Connection['reason'], string> = {
@@ -18,12 +19,17 @@ const REASON_LABEL: Record<Connection['reason'], string> = {
   'visiting then': 'will be visiting too',
 };
 
-export function TripCard({ destination, dateRange, connections }: TripCardProps) {
+export function TripCard({ destination, dateRange, connections, onPress }: TripCardProps) {
   const theme = useTheme();
   const hasConnections = connections.length > 0;
 
   return (
-    <View style={[styles.card, { backgroundColor: theme.backgroundElement, shadowColor: theme.text }]}>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.card,
+        { backgroundColor: theme.backgroundElement, shadowColor: theme.text, opacity: pressed ? 0.9 : 1 },
+      ]}>
       <Text style={[styles.dest, { color: theme.text }]}>{destination}</Text>
       <Text style={[styles.dates, { color: theme.textSecondary }]}>{dateRange}</Text>
 
@@ -46,7 +52,7 @@ export function TripCard({ destination, dateRange, connections }: TripCardProps)
           </Text>
         </View>
       )}
-    </View>
+    </Pressable>
   );
 }
 

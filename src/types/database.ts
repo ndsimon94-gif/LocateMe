@@ -486,6 +486,23 @@ export type Database = {
           created_at: string;
         }[];
       };
+      get_crossing_paths: {
+        Args: Record<string, never>;
+        Returns: {
+          friend_id: string;
+          friend_name: string | null;
+          city_id: string;
+          city_name: string;
+          country_name: string;
+          my_start_date: string;
+          my_end_date: string;
+          friend_start_date: string;
+          friend_end_date: string;
+          overlap_start: string;
+          overlap_end: string;
+          overlap_days: number;
+        }[];
+      };
       search_orbit_by_place: {
         Args: { p_country_code: string };
         Returns: {

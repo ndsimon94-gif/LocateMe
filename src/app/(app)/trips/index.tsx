@@ -1,10 +1,11 @@
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { FlatList, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AnniversaryCard } from '@/components/anniversary-card';
 import { Button } from '@/components/button';
+import { CrossingPathCard } from '@/components/crossing-path-card';
 import { HistoryMap } from '@/components/history-map';
 import { SegmentedControl } from '@/components/segmented-control';
 import { StampRow } from '@/components/stamp-row';
@@ -12,6 +13,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { TripCard } from '@/components/trip-card';
 import { Spacing } from '@/constants/theme';
+import { useCrossingPaths } from '@/hooks/use-crossing-paths';
 import { useFriendshipHistory } from '@/hooks/use-friendship-history';
 import { useItineraries } from '@/hooks/use-itineraries';
 import { findAnniversaries } from '@/lib/anniversaries';
@@ -36,6 +38,7 @@ export default function TripsScreen() {
   const [historyView, setHistoryView] = useState<HistoryView>('list');
   const { stops, isLoading, refresh } = useItineraries();
   const itineraries = useMemo(() => groupStopsByItinerary(stops), [stops]);
+  const { paths: crossingPaths } = useCrossingPaths();
   const {
     entries: historyEntries,
     isLoading: historyLoading,
@@ -70,6 +73,13 @@ export default function TripsScreen() {
                 style={styles.listFlex}
                 contentContainerStyle={styles.list}
                 refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refresh} />}>
+                {crossingPaths.length > 0 && (
+                  <View style={styles.crossingPathsList}>
+                    {crossingPaths.map((path) => (
+                      <CrossingPathCard key={`${path.friend_id}-${path.city_id}`} path={path} />
+                    ))}
+                  </View>
+                )}
                 {itineraries.map((itinerary) => (
                   <View key={itinerary.itineraryId} style={styles.itineraryGroup}>
                     {itinerary.title && (
@@ -82,6 +92,16 @@ export default function TripsScreen() {
                           destination={`${stop.city_name}, ${stop.country_name}`}
                           dateRange={formatDateRange(stop.start_date, stop.end_date)}
                           connections={stop.connections}
+                          onPress={() =>
+                            router.push({
+                              pathname: '/(app)/place',
+                              params: {
+                                countryCode: stop.country_code,
+                                countryName: stop.country_name,
+                                cityName: stop.city_name,
+                              },
+                            })
+                          }
                         />
                       ))}
                     </View>
@@ -168,6 +188,10 @@ const styles = StyleSheet.create({
   },
   list: {
     paddingBottom: Spacing.two,
+  },
+  crossingPathsList: {
+    gap: Spacing.two,
+    marginBottom: Spacing.three,
   },
   itineraryGroup: {
     gap: Spacing.two,
