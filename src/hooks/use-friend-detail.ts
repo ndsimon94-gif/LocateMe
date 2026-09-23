@@ -90,7 +90,7 @@ export function useFriendDetail(friendshipId: string | undefined) {
   );
 
   const addTag = useCallback(
-    async (name: string) => {
+    async (name: string, defaultSharingLevel?: 'off' | 'country' | 'city' | null) => {
       if (!friendshipId || !session) return;
       const trimmed = name.trim();
       if (!trimmed || tags.some((tag) => tag.name.toLowerCase() === trimmed.toLowerCase())) return;
@@ -106,7 +106,7 @@ export function useFriendDetail(friendshipId: string | undefined) {
       if (!tag) {
         const { data: created } = await supabase
           .from('tags')
-          .insert({ owner_id: session.user.id, name: trimmed })
+          .insert({ owner_id: session.user.id, name: trimmed, default_sharing_level: defaultSharingLevel ?? null })
           .select('id, name')
           .single();
         tag = created;

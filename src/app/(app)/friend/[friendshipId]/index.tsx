@@ -19,6 +19,16 @@ import { useFriendsWithLocation } from '@/hooks/use-friends-with-location';
 import { useTheme } from '@/hooks/use-theme';
 import { supabase } from '@/lib/supabase';
 
+// Connection circles: private tags that can carry a default sharing
+// level. Only "Close friends" bakes one in (city) — the rest are just
+// suggested labels, no automatic effect on what a friend sees of you.
+const CIRCLE_PRESETS: { name: string; level: 'off' | 'country' | 'city' | null }[] = [
+  { name: 'Close friends', level: 'city' },
+  { name: 'Travel friends', level: null },
+  { name: 'Would visit', level: null },
+  { name: 'Met briefly', level: null },
+];
+
 export default function FriendDetailScreen() {
   const { friendshipId } = useLocalSearchParams<{ friendshipId: string }>();
   const theme = useTheme();
@@ -301,11 +311,30 @@ export default function FriendDetailScreen() {
 
           <View style={styles.section}>
             <ThemedText style={styles.sectionLabel}>Tags</ThemedText>
+            <ThemedText themeColor="textSecondary" style={styles.sectionHint}>
+              Private to you. Nobody sees what you&apos;ve tagged them.
+            </ThemedText>
             <View style={styles.tagRow}>
               {tags.map((tag) => (
                 <TagChip key={tag.id} label={tag.name} onPress={() => removeTag(tag.id)} />
               ))}
             </View>
+            {CIRCLE_PRESETS.filter(
+              (preset) => !tags.some((tag) => tag.name.toLowerCase() === preset.name.toLowerCase()),
+            ).length > 0 && (
+              <View style={styles.tagRow}>
+                {CIRCLE_PRESETS.filter(
+                  (preset) => !tags.some((tag) => tag.name.toLowerCase() === preset.name.toLowerCase()),
+                ).map((preset) => (
+                  <TagChip
+                    key={preset.name}
+                    label={preset.name}
+                    variant="add"
+                    onPress={() => addTag(preset.name, preset.level)}
+                  />
+                ))}
+              </View>
+            )}
             <View style={styles.addTagRow}>
               <View style={styles.addTagField}>
                 <TextField

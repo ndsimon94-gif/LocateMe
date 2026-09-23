@@ -276,18 +276,21 @@ export type Database = {
           id: string;
           owner_id: string;
           name: string;
+          default_sharing_level: 'off' | 'country' | 'city' | null;
           created_at: string;
         };
         Insert: {
           id?: string;
           owner_id: string;
           name: string;
+          default_sharing_level?: 'off' | 'country' | 'city' | null;
           created_at?: string;
         };
         Update: {
           id?: string;
           owner_id?: string;
           name?: string;
+          default_sharing_level?: 'off' | 'country' | 'city' | null;
           created_at?: string;
         };
         Relationships: [];
