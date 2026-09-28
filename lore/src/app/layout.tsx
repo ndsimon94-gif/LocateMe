@@ -23,8 +23,13 @@ const instrument = Instrument_Sans({
   display: "swap",
 });
 
+/** The site's public address: set NEXT_PUBLIC_SITE_URL once a domain exists; Vercel's URL is used until then. */
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000");
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://lore.example"),
+  metadataBase: new URL(siteUrl),
   title: {
     default: "LORE — Living Oral Record Exchange",
     template: "%s — LORE",
