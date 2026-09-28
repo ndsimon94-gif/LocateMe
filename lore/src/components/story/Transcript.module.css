@@ -1,0 +1,122 @@
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2rem;
+  align-items: flex-end;
+  margin-bottom: 1.5rem;
+}
+.pick {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 12rem;
+}
+.pending {
+  margin: 0;
+  font-style: italic;
+  color: var(--ink-3);
+  max-width: 34rem;
+}
+.body {
+  position: relative;
+  max-height: 22rem;
+  overflow: hidden;
+  transition: max-height 1200ms var(--ease);
+}
+.open {
+  max-height: none;
+}
+.fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 9rem;
+  background: linear-gradient(to bottom, rgba(242, 235, 223, 0), var(--paper));
+  pointer-events: none;
+}
+.cols {
+  display: grid;
+}
+.headRow,
+.row {
+  display: grid;
+  grid-template-columns: 4rem minmax(0, 1fr);
+  gap: 1.5rem;
+}
+.two .headRow,
+.two .row {
+  grid-template-columns: 4rem minmax(0, 1fr) minmax(0, 1fr);
+}
+.headRow {
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid var(--rule);
+}
+.headRow > :first-child {
+  grid-column: 1;
+}
+.row {
+  padding: 1.1rem 0;
+  border-bottom: 1px solid var(--rule);
+  transition: background 600ms var(--ease);
+}
+.active {
+  background: linear-gradient(to right, rgba(156, 79, 53, 0.07), transparent);
+}
+.time {
+  background: none;
+  border: 0;
+  padding: 0.2rem 0;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-3);
+  cursor: pointer;
+  min-height: 32px;
+}
+.time:hover {
+  color: var(--clay);
+}
+.orig {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  line-height: 1.4;
+}
+.trans {
+  font-size: 1.02rem;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+.cols:not(.two) .trans {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--ink);
+}
+.toggle {
+  margin-top: 1.5rem;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--rule-strong);
+  padding: 0.4rem 0;
+  min-height: 44px;
+  font-family: var(--font-sans);
+  font-size: 0.74rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.toggle:hover {
+  border-bottom-color: currentColor;
+}
+@media (max-width: 700px) {
+  .two .headRow {
+    display: none;
+  }
+  .two .row,
+  .row {
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+  }
+  .orig {
+    font-size: 1.2rem;
+  }
+}

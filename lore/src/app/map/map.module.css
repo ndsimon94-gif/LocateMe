@@ -1,0 +1,25 @@
+.page {
+  position: relative;
+  height: 100svh;
+  padding-top: var(--header-h);
+  background: var(--paper-2);
+}
+.hint {
+  position: absolute;
+  left: 50%;
+  bottom: 0.6rem;
+  transform: translateX(-50%);
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 0.64rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  pointer-events: none;
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .hint {
+    display: none;
+  }
+}

@@ -1,0 +1,33 @@
+.globe {
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+}
+.sphere {
+  fill: var(--paper-2);
+  stroke: var(--ink-2);
+  stroke-opacity: 0.5;
+  stroke-width: 0.8;
+}
+.grat {
+  fill: none;
+  stroke: var(--ink);
+  stroke-opacity: 0.1;
+  stroke-width: 0.5;
+  stroke-dasharray: 1 2.5;
+}
+.land {
+  fill: var(--paper-3);
+  stroke: var(--ink-2);
+  stroke-opacity: 0.6;
+  stroke-width: 0.5;
+}
+.ring {
+  fill: none;
+  stroke: var(--clay);
+  stroke-width: 1;
+  opacity: 0.6;
+}
+.dot {
+  fill: var(--clay);
+}

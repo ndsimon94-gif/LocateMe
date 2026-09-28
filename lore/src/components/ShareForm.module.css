@@ -1,0 +1,85 @@
+.form {
+  display: grid;
+  gap: clamp(3.5rem, 7vw, 5.5rem);
+}
+.step {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  display: grid;
+  gap: 2rem;
+}
+.legend {
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 3.4vw, 2.6rem);
+  line-height: 1.1;
+  padding: 0 0 1rem;
+  margin-bottom: 1rem;
+  width: 100%;
+  border-bottom: 1px solid var(--rule);
+}
+.num {
+  font-style: italic;
+  color: var(--clay);
+  margin-right: 0.4rem;
+}
+.paths {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+.row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2rem;
+}
+.q {
+  display: grid;
+  gap: 0.9rem;
+}
+.qText {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+}
+.inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.inline :global(.choice) {
+  padding: 0.6rem 0.9rem;
+  align-items: center;
+}
+.inline :global(.choice input) {
+  margin-top: 0;
+}
+.soon {
+  margin: 0;
+  font-style: italic;
+  color: var(--ink-3);
+  font-size: 0.95rem;
+}
+.submit {
+  display: grid;
+  gap: 1rem;
+  justify-items: start;
+}
+.err {
+  color: var(--clay);
+  margin: 0;
+}
+.done {
+  padding-block: 3rem;
+  max-width: 40rem;
+}
+.done :global(.lede) {
+  margin-top: 1.5rem;
+}
+@media (max-width: 640px) {
+  .paths,
+  .row {
+    grid-template-columns: 1fr;
+  }
+}

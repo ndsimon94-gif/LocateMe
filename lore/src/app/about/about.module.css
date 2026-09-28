@@ -1,0 +1,49 @@
+.before {
+  border-top: 1px solid var(--rule);
+}
+.imageBand {
+  position: relative;
+  height: clamp(280px, 55vw, 640px);
+}
+.bandStill {
+  position: absolute;
+  inset: 0;
+}
+.listening {
+  background: var(--paper-2);
+}
+.nonprofit a:not(:global(.btn)) {
+  color: var(--clay);
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+.aom {
+  padding-block: clamp(4rem, 8vw, 6rem);
+  border-top: 1px solid var(--rule);
+}
+.aomInner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 2rem clamp(2.5rem, 6vw, 6rem);
+}
+.aomTitle {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: 1.25rem;
+  letter-spacing: 0.01em;
+  margin: 0.8rem 0 0;
+}
+.aomText p {
+  margin: 0 0 1rem;
+  color: var(--ink-2);
+  font-size: 1rem;
+}
+@media (max-width: 900px) {
+  .aomInner {
+    grid-template-columns: 1fr;
+  }
+}

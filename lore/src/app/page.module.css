@@ -1,0 +1,373 @@
+/* ───────── Introduction ───────── */
+.intro {
+  padding-block: clamp(7rem, 16vw, 14rem);
+}
+.introLabel {
+  margin: 0 0 clamp(2.5rem, 5vw, 4rem);
+}
+.introText {
+  max-width: 62rem;
+}
+.introLine {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.9rem, 4.2vw, 3.6rem);
+  line-height: 1.16;
+  letter-spacing: -0.005em;
+  margin: 0 0 0.6em;
+  color: var(--ink-2);
+}
+.introLine:first-child {
+  color: var(--ink);
+}
+.introLast {
+  color: var(--ink);
+  padding-left: clamp(0rem, 12vw, 10rem);
+  font-style: italic;
+}
+.triptych {
+  margin-top: clamp(4rem, 9vw, 8rem);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0;
+}
+.triptych span {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: 0.3rem clamp(1rem, 3vw, 2.4rem);
+  border-left: 1px solid var(--rule-strong);
+}
+
+/* ───────── Featured ───────── */
+.featured {
+  position: relative;
+}
+.featuredGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  min-height: min(100svh, 980px);
+}
+.featuredImage {
+  position: relative;
+  min-height: 60vh;
+}
+.featuredStill {
+  position: absolute;
+  inset: 0;
+}
+.featuredText {
+  padding: clamp(4rem, 8vw, 8rem) var(--gutter) clamp(4rem, 8vw, 8rem) clamp(2rem, 5vw, 5rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2rem;
+  max-width: 40rem;
+}
+.featuredTitle {
+  font-size: clamp(2.8rem, 5.4vw, 5rem);
+  margin-bottom: 1.2rem;
+}
+.featuredTeller {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--night-ink-2);
+}
+.featuredTeller strong {
+  font-weight: 500;
+  color: var(--night-ink);
+}
+.featuredDesc {
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 2vw, 1.6rem);
+  line-height: 1.35;
+  margin: 0 0 2rem;
+  color: var(--night-ink);
+}
+.card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 0;
+  border-top: 1px solid var(--rule);
+}
+.card div {
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+.card div:nth-child(odd) {
+  padding-right: 1rem;
+}
+.card dt {
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 0.2rem;
+}
+.card dd {
+  margin: 0;
+  font-size: 1rem;
+}
+.featuredActions {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+.watch {
+  display: inline-flex;
+  align-items: center;
+  gap: 1.1rem;
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  line-height: 1.1;
+}
+.watch small {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--night-ink-2);
+  margin-top: 0.3rem;
+}
+.play {
+  width: 64px;
+  height: 64px;
+  flex: none;
+  border-radius: 50%;
+  border: 1px solid rgba(239, 230, 214, 0.5);
+  display: grid;
+  place-items: center;
+  padding-left: 3px;
+  transition:
+    background 600ms var(--ease),
+    color 600ms var(--ease),
+    transform 600ms var(--ease);
+}
+.watch:hover .play {
+  background: var(--night-ink);
+  color: var(--night);
+  transform: scale(1.05);
+}
+
+/* ───────── Shared split heading ───────── */
+.split {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 2rem 4rem;
+  flex-wrap: wrap;
+  margin-bottom: clamp(2.5rem, 5vw, 4.5rem);
+}
+.split h2 em {
+  color: var(--ink-2);
+}
+.splitAside {
+  max-width: 26rem;
+  display: grid;
+  gap: 1.2rem;
+  justify-items: start;
+}
+.splitAside :global(.lede) {
+  margin: 0;
+  font-size: clamp(1.25rem, 1.9vw, 1.55rem);
+}
+
+/* ───────── Map ───────── */
+.mapSection {
+  background: var(--paper-2);
+}
+.mapFrame {
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  padding-block: 1rem;
+}
+
+/* ───────── Voices ───────── */
+.voiceGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(1.2rem, 2.5vw, 2.4rem);
+  align-items: start;
+}
+.v1 {
+  margin-top: 5rem;
+}
+.v2 {
+  margin-top: 2rem;
+}
+.v3 {
+  margin-top: 7rem;
+}
+
+/* ───────── Browse ───────── */
+.browse {
+  border-top: 1px solid var(--rule);
+}
+.browse h2 {
+  margin: 0 0 1.2rem;
+}
+.browseNote {
+  max-width: 36rem;
+  color: var(--ink-3);
+  font-style: italic;
+  margin: 0 0 clamp(2rem, 4vw, 3rem);
+}
+
+/* ───────── Echoes ───────── */
+.echoes {
+  background: var(--paper-2);
+}
+.echoHead {
+  max-width: 44rem;
+  margin-bottom: clamp(2.5rem, 5vw, 4rem);
+}
+.echoHead h2 em {
+  color: var(--ink-3);
+}
+.echoList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--rule);
+}
+.echo {
+  display: grid;
+  grid-template-columns: minmax(10rem, 16rem) 1fr auto;
+  align-items: baseline;
+  gap: 1.5rem;
+  padding: 1.4rem 0;
+  border-bottom: 1px solid var(--rule);
+  text-decoration: none;
+}
+.echoTheme {
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+  font-style: italic;
+  transition: color 400ms var(--ease);
+}
+.echo:hover .echoTheme {
+  color: var(--clay);
+}
+.echoRule {
+  height: 1px;
+  background: repeating-linear-gradient(to right, var(--rule-strong) 0 2px, transparent 2px 6px);
+  align-self: center;
+}
+.echoPlaces {
+  font-family: var(--font-sans);
+  font-size: 0.74rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  text-align: right;
+}
+
+/* ───────── Invitation ───────── */
+.invite {
+  padding-block: clamp(7rem, 15vw, 13rem);
+}
+.inviteGrid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: clamp(2.5rem, 6vw, 6rem);
+  align-items: start;
+}
+.inviteTitle {
+  font-size: clamp(3rem, 7.5vw, 7rem);
+  line-height: 0.98;
+}
+.inviteTitle em {
+  display: block;
+  color: var(--clay);
+}
+.inviteBody :global(.lede) {
+  margin-top: 0;
+}
+.inviteList {
+  list-style: none;
+  padding: 0;
+  margin: 2rem 0;
+  border-top: 1px solid var(--rule);
+}
+.inviteList li {
+  padding: 0.85rem 0 0.85rem 2rem;
+  border-bottom: 1px solid var(--rule);
+  position: relative;
+  font-size: 1.05rem;
+}
+.inviteList li::before {
+  content: "";
+  position: absolute;
+  left: 0.2rem;
+  top: 1.45rem;
+  width: 0.9rem;
+  height: 1px;
+  background: var(--clay);
+}
+.inviteSoft {
+  color: var(--ink-3);
+  font-style: italic;
+  margin: 0 0 2rem;
+}
+
+/* ───────── Responsive ───────── */
+@media (max-width: 1000px) {
+  .voiceGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .v2 {
+    margin-top: 0;
+  }
+  .v3 {
+    margin-top: 5rem;
+  }
+}
+@media (max-width: 860px) {
+  .featuredGrid {
+    grid-template-columns: 1fr;
+  }
+  .featuredImage {
+    min-height: 0;
+    aspect-ratio: 4 / 5;
+  }
+  .featuredText {
+    padding: 3rem var(--gutter) 5rem;
+  }
+  .inviteGrid {
+    grid-template-columns: 1fr;
+  }
+  .echo {
+    grid-template-columns: 1fr;
+    gap: 0.3rem;
+  }
+  .echoRule {
+    display: none;
+  }
+  .echoPlaces {
+    text-align: left;
+  }
+  .introLast {
+    padding-left: 0;
+  }
+  .triptych {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+  .triptych span:first-child {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+@media (max-width: 520px) {
+  .voiceGrid {
+    gap: 2.5rem 1rem;
+  }
+  .card {
+    grid-template-columns: 1fr;
+  }
+}

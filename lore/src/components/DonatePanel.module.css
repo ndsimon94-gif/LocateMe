@@ -1,0 +1,48 @@
+.panel {
+  display: grid;
+  gap: 1.2rem;
+  justify-items: start;
+}
+.freq,
+.amounts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.freq button,
+.amounts button {
+  min-height: 44px;
+  min-width: 4.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--rule-strong);
+  background: none;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 300ms, color 300ms;
+}
+.freq button[aria-pressed="true"],
+.amounts button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.other {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  border-bottom: 1px solid var(--rule-strong);
+  padding-inline: 0.4rem;
+  font-family: var(--font-sans);
+}
+.other input {
+  width: 5rem;
+  min-height: 44px;
+  border: 0;
+  background: none;
+  font-family: var(--font-sans);
+}
+.other input:focus {
+  outline: none;
+}

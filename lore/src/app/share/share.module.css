@@ -1,0 +1,206 @@
+.hero {
+  padding-top: calc(var(--header-h) + clamp(4rem, 12vw, 10rem));
+  padding-bottom: clamp(4rem, 10vw, 8rem);
+}
+.title {
+  font-size: clamp(3.2rem, 9vw, 8.5rem);
+  line-height: 0.95;
+  margin-top: 1.5rem;
+}
+.title em {
+  display: block;
+  color: var(--clay);
+}
+.needs {
+  margin-top: clamp(3rem, 7vw, 6rem);
+  margin-left: auto;
+  max-width: 34rem;
+}
+.needs p {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 2.6vw, 2.1rem);
+  line-height: 1.3;
+  margin: 0;
+  color: var(--ink-3);
+}
+.needs .matters {
+  color: var(--ink);
+  font-style: italic;
+  margin-top: 1rem;
+}
+
+.ways {
+  border-top: 1px solid var(--rule);
+}
+.waysGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: clamp(2.5rem, 6vw, 6rem);
+}
+.wayList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--rule);
+}
+.wayList li {
+  display: grid;
+  grid-template-columns: 3rem 1fr;
+  padding: 1.4rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+.wayList strong {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.6rem;
+  line-height: 1.2;
+}
+.wayList li span span {
+  color: var(--ink-3);
+}
+.wayNum {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.4rem;
+  color: var(--clay);
+}
+
+.one {
+  position: relative;
+  min-height: 90svh;
+  display: grid;
+  align-items: end;
+  overflow: hidden;
+}
+.oneImg {
+  position: absolute;
+  inset: 0;
+}
+.oneImg > div {
+  position: absolute;
+  inset: 0;
+}
+.oneImg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(19, 16, 13, 0.9) 10%, rgba(19, 16, 13, 0.2) 70%);
+}
+.oneText {
+  position: relative;
+  padding-block: clamp(4rem, 10vw, 8rem);
+}
+.oneTitle {
+  font-size: clamp(3rem, 8vw, 7rem);
+  line-height: 1;
+  margin: 1.5rem 0 2rem;
+}
+.oneTitle em {
+  color: var(--ember);
+}
+.oneBody {
+  max-width: 34rem;
+  font-size: 1.1rem;
+  color: var(--night-ink-2);
+}
+
+.guide {
+  background: var(--paper-2);
+}
+.guideHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin-bottom: clamp(3rem, 6vw, 5rem);
+}
+.guideHead h2 {
+  margin-top: 1rem;
+}
+.guideAside {
+  max-width: 22rem;
+}
+.guideAside p {
+  margin: 0 0 1rem;
+  font-style: italic;
+  color: var(--ink-2);
+}
+.pdf {
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  border-bottom: 1px dashed var(--rule-strong);
+  padding-bottom: 0.3rem;
+}
+.notes {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.2rem;
+}
+.note {
+  background: var(--card);
+  padding: clamp(1.4rem, 2.5vw, 2rem);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  box-shadow: 0 1px 0 rgba(29, 25, 20, 0.04);
+}
+.noteNum {
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  color: var(--clay);
+}
+.note h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.7rem;
+  line-height: 1.1;
+  margin: 0.8rem 0 0.6rem;
+}
+.note p {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 1rem;
+}
+
+.formWrap {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr);
+  gap: clamp(2.5rem, 7vw, 7rem);
+  align-items: start;
+}
+.formIntro {
+  position: sticky;
+  top: calc(var(--header-h) + 2rem);
+}
+.formIntro h2 {
+  margin: 1rem 0 1.5rem;
+}
+.formIntro p:last-child {
+  color: var(--ink-2);
+}
+
+@media (max-width: 960px) {
+  .notes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .formWrap,
+  .waysGrid {
+    grid-template-columns: 1fr;
+  }
+  .formIntro {
+    position: static;
+  }
+}
+@media (max-width: 600px) {
+  .notes {
+    grid-template-columns: 1fr;
+  }
+}

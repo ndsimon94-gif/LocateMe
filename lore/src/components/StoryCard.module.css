@@ -1,0 +1,76 @@
+.card {
+  display: grid;
+  gap: 1.1rem;
+  text-decoration: none;
+  color: inherit;
+}
+.frame {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--night-2);
+}
+.lg .frame {
+  aspect-ratio: 3 / 4;
+}
+.img {
+  position: absolute;
+  inset: 0;
+  transition:
+    transform 2400ms var(--ease),
+    filter 1200ms var(--ease);
+  filter: saturate(0.92);
+}
+.card:hover .img,
+.card:focus-visible .img {
+  transform: scale(1.035);
+  filter: saturate(1.05);
+}
+.duration {
+  position: absolute;
+  left: 0.8rem;
+  bottom: 0.7rem;
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(239, 230, 214, 0.85);
+}
+.body {
+  display: grid;
+  gap: 0.35rem;
+}
+.body :global(.label) {
+  margin: 0;
+}
+.title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.45rem, 2.1vw, 1.75rem);
+  line-height: 1.1;
+  margin: 0;
+  transition: color 500ms var(--ease);
+}
+.lg .title {
+  font-size: clamp(1.7rem, 2.6vw, 2.2rem);
+}
+.card:hover .title {
+  color: var(--clay);
+}
+:global(.dark) .card:hover .title {
+  color: var(--ember);
+}
+.teller {
+  margin: 0;
+  font-size: 0.98rem;
+  color: var(--ink-2);
+}
+.lang {
+  color: var(--ink-3);
+}
+.demo {
+  justify-self: start;
+  margin-top: 0.4rem;
+  color: var(--ink-3);
+}

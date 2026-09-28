@@ -1,0 +1,9 @@
+.ways {
+  background: var(--paper-2);
+}
+.donate {
+  grid-row: span 1;
+}
+.partners {
+  border-top: 1px solid var(--rule);
+}
