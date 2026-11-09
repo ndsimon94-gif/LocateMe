@@ -7,6 +7,7 @@ import { formatMinutes, weeklyFocusSummary } from '@/domain/focus/focus-history'
 import { clampMinutes, formatCountdown, remainingMs } from '@/domain/focus/focus-timer';
 import { useClock } from '@/state/clock';
 import { useFocus } from '@/state/focus-store';
+import { useNotifications } from '@/state/notifications-store';
 import { usePreferences } from '@/state/preferences-store';
 import { useTasks } from '@/state/tasks-store';
 import { colors, radius, space } from '@/theme/tokens';
@@ -37,6 +38,7 @@ function StartSession() {
   const params = useLocalSearchParams<{ taskId?: string }>();
   const { getTask } = useTasks();
   const { start } = useFocus();
+  const notifications = useNotifications();
   const { preferences } = usePreferences();
   const [intention, setIntention] = useState('');
   const [minutes, setMinutes] = useState(preferences.defaultFocusMinutes);
@@ -67,7 +69,14 @@ function StartSession() {
         </Text>
         <Button compact tone="quiet" label="+ 5" accessibilityHint="Five minutes longer" onPress={() => setMinutes((m) => clampMinutes(m + 5))} />
       </View>
-      <Button label="Start focus session" onPress={() => start(intention, minutes)} />
+      <Button
+        label="Start focus session"
+        onPress={() => {
+          start(intention, minutes);
+          // Asked here, when it's obviously useful: to tell you when the session ends.
+          void notifications.requestIfNeeded();
+        }}
+      />
       <Text variant="small" muted>
         Intentional can&apos;t silence other apps yet. For fewer interruptions, turn on your phone&apos;s Focus or Do Not
         Disturb mode for this session.
@@ -171,6 +180,7 @@ function AttentionSettings() {
 
   return (
     <Section title="Attention settings">
+      <NotificationSettings />
       <Card>
         <Text variant="heading">Communication windows</Text>
         <Text variant="small" muted>
@@ -245,6 +255,44 @@ function AttentionSettings() {
         </Text>
       </Card>
     </Section>
+  );
+}
+
+function NotificationSettings() {
+  const { permission, requestIfNeeded, scheduledCount } = useNotifications();
+  const { preferences, updatePreferences } = usePreferences();
+  const status =
+    permission === 'granted'
+      ? `On. ${scheduledCount} scheduled for the next week.`
+      : permission === 'denied'
+        ? "Off in your phone's settings. Reminders will only appear in the app."
+        : permission === 'unavailable'
+          ? 'Not available in this preview. Use the app on a phone.'
+          : 'Not turned on yet.';
+  return (
+    <Card>
+      <Text variant="heading">Notifications</Text>
+      <Text variant="small" muted>
+        {status} Intentional only notifies you about things you asked for — never to bring you back into the app.
+      </Text>
+      {permission === 'undetermined' ? <Button compact tone="secondary" label="Turn on notifications" style={styles.left} onPress={() => void requestIfNeeded()} /> : null}
+      <Text variant="small" muted>
+        Always: reminders and the end of a focus session.
+      </Text>
+      <SettingSwitch
+        label="When time you set aside begins"
+        value={preferences.notifyTimeBlocks}
+        onChange={(v) => updatePreferences({ notifyTimeBlocks: v })}
+      />
+      <SettingSwitch
+        label="When a message window opens"
+        value={preferences.notifyCommunicationWindows}
+        onChange={(v) => updatePreferences({ notifyCommunicationWindows: v })}
+      />
+      <Text variant="small" muted>
+        Nothing for windows or set-aside time after your wind-down time.
+      </Text>
+    </Card>
   );
 }
 

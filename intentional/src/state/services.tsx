@@ -4,6 +4,8 @@ import type { Assistant } from '@/ai/assistant';
 import { mockAssistant } from '@/ai/mock-assistant';
 import { deviceStore } from '@/data/device-store';
 import { createLocalRepositories, type Repositories } from '@/data/repositories';
+import { expoNotifier } from '@/integrations/expo-notifier';
+import type { Notifier } from '@/integrations/notifications';
 import type { CalendarProvider } from '@/integrations/calendar/calendar-provider';
 import { mockCalendarProvider } from '@/integrations/calendar/mock-calendar';
 import type { MailProvider } from '@/integrations/mail/mail-provider';
@@ -19,6 +21,7 @@ export interface Services {
   calendar: CalendarProvider;
   mail: MailProvider;
   assistant: Assistant;
+  notifier: Notifier;
 }
 
 const ServicesContext = createContext<Services | null>(null);
@@ -31,6 +34,7 @@ export function ServicesProvider({ children, services }: { children: ReactNode; 
         calendar: mockCalendarProvider,
         mail: mockMailProvider,
         assistant: mockAssistant,
+        notifier: expoNotifier,
       },
     [services],
   );

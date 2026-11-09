@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
-import { StyleSheet, View, type TextInput } from 'react-native';
+import { Pressable, StyleSheet, View, type TextInput } from 'react-native';
 
 import type { AssistantResponse, ProposedAction } from '@/ai/assistant';
 import { needsReplyCount } from '@/domain/communications/communication';
@@ -11,6 +11,8 @@ import { useCalendarEvents } from '@/state/calendar';
 import { useCommunications } from '@/state/communications-store';
 import { executeAction } from '@/state/execute-action';
 import { useFocus } from '@/state/focus-store';
+import { useNotifications } from '@/state/notifications-store';
+import { usePlans } from '@/state/plans-store';
 import { useServices } from '@/state/services';
 import { useTasks } from '@/state/tasks-store';
 import { colors, space } from '@/theme/tokens';
@@ -21,7 +23,12 @@ import { SampleBadge } from '@/ui/sample-badge';
 import { Text } from '@/ui/text';
 import { TextField } from '@/ui/text-field';
 
-const EXAMPLES = ['Remind me to call the dentist tomorrow at 10am', 'Focus for 45 minutes on the proposal', 'Buy birthday card for Alex friday', "What's on today?"];
+const EXAMPLES = [
+  'I have a busy week. Organize my priorities, find time for exercise, remind me of anything important, and give me two windows each day to respond to messages.',
+  'Remind me to call the dentist tomorrow at 10am',
+  'Focus for 45 minutes on the proposal',
+  "What's on today?",
+];
 
 export default function CommandScreen() {
   const router = useRouter();
@@ -30,6 +37,8 @@ export default function CommandScreen() {
   const { tasks, addTask } = useTasks();
   const focus = useFocus();
   const comms = useCommunications();
+  const plans = usePlans();
+  const notifications = useNotifications();
   const now = new Date();
   const today = toLocalDate(now);
   const { events } = useCalendarEvents(today, addDays(today, 1));
@@ -61,14 +70,28 @@ export default function CommandScreen() {
 
   const run = (action: ProposedAction) => {
     const result = executeAction(action, {
-      addTask,
-      startFocus: focus.start,
+      addTask: (draft) => {
+        const r = addTask(draft);
+        if (r.ok && r.value.kind === 'reminder') void notifications.requestIfNeeded();
+        return r;
+      },
+      startFocus: (intention, minutes) => {
+        focus.start(intention, minutes);
+        void notifications.requestIfNeeded();
+      },
+      reviewPlan: (request) => {
+        setBusy(true);
+        void plans
+          .propose(request)
+          .then(() => router.replace('/plan-review'))
+          .finally(() => setBusy(false));
+      },
       navigate: (to, params) => {
         router.dismissAll();
         router.navigate(params ? { pathname: to, params } : to);
       },
     });
-    if (action.kind === 'navigate' || action.kind === 'start_focus') return;
+    if (action.kind === 'navigate' || action.kind === 'start_focus' || action.kind === 'propose_plan') return;
     setOutcome(result);
     if (result.ok) {
       setInput('');
@@ -122,17 +145,18 @@ export default function CommandScreen() {
             Try
           </Text>
           {EXAMPLES.map((e) => (
-            <Button
+            <Pressable
               key={e}
-              compact
-              tone="quiet"
-              label={e}
-              style={styles.left}
+              accessibilityRole="button"
               onPress={() => {
                 setInput(e);
                 void ask(e);
               }}
-            />
+              style={({ pressed }) => [styles.example, pressed && { opacity: 0.7 }]}>
+              <Text variant="small" style={{ color: colors.accent }}>
+                {e}
+              </Text>
+            </Pressable>
           ))}
           <Text variant="small" muted>
             Runs entirely on this device. Nothing you type here is sent anywhere.
@@ -155,6 +179,13 @@ function ActionView({ action, onRun }: { action: ProposedAction; onRun: (a: Prop
     );
   }
   const verb = action.kind === 'create_task' ? 'Add' : action.kind === 'start_focus' ? 'Start' : 'Go';
+  if (action.kind === 'propose_plan') {
+    return (
+      <View style={styles.action}>
+        <Button label={action.label} onPress={() => onRun(action)} />
+      </View>
+    );
+  }
   return (
     <View style={styles.action}>
       {action.kind === 'create_task' ? <Text style={styles.flex}>{action.label}</Text> : null}
@@ -168,5 +199,6 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   action: { gap: space.sm, paddingTop: space.sm, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
   examples: { gap: space.xs },
+  example: { paddingVertical: space.sm, minHeight: 44, justifyContent: 'center' },
   left: { alignSelf: 'flex-start' },
 });

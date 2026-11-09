@@ -1,3 +1,4 @@
+import type { PlanRequest } from '@/domain/planning/plan-request';
 import type { TaskDraft } from '@/domain/tasks/task';
 
 /**
@@ -13,6 +14,8 @@ export type ProposedAction =
   | { kind: 'create_task'; label: string; draft: TaskDraft }
   | { kind: 'start_focus'; label: string; minutes: number; intention: string }
   | { kind: 'navigate'; label: string; to: AppRoute; params?: Record<string, string> }
+  /** A multi-step plan. The app turns the request into concrete changes for the user to review. */
+  | { kind: 'propose_plan'; label: string; request: PlanRequest }
   /**
    * The request needs an integration that isn't connected or authorised.
    * `fallback` is an optional local alternative (e.g. a task to do it yourself).

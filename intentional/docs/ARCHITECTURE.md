@@ -1,8 +1,10 @@
-# Intentional: Milestone 1 Design
+# Intentional: Design
 
 > The best interaction with this app is a short one that helps someone return to their actual life.
 
-This document covers the deliverables requested before implementation: the architecture, folder structure, database schema, screen and navigation spec, dependencies, implementation plan, and platform limitations and risks. It describes the code as built in milestone 1.
+This document covers the architecture, folder structure, database schema, screen and navigation spec, dependencies, implementation plan, and platform limitations and risks. It describes the code as built through **milestone 1.5** (real notifications and the planning foundation).
+
+**Product direction.** Intentional is not trying to be the best task manager, calendar or blocker. Its value is the intelligence that connects them. The target experience is a single request such as *"I have a busy week. Organize my priorities, find time for exercise, remind me of anything important, and give me two windows each day to respond to messages."* The app then proposes a concrete plan, the user approves it, and the app helps carry it out. The task list stays deliberately simple.
 
 ---
 
@@ -55,6 +57,44 @@ Today `mockAssistant` is a deterministic, offline rule-based parser. Later, a `R
 
 **Persistence.** Tasks, focus history, the active focus timer, preferences and handled-message IDs are stored as versioned JSON documents in AsyncStorage (`data/document.ts`). If data is corrupt or has an unknown version, the app falls back to defaults instead of crashing. The focus timer stores absolute timestamps, so it survives the app being backgrounded or killed.
 
+### The planning pipeline (milestone 1.5)
+
+This is the core of the product and the seam where the real AI plugs in.
+
+```
+ "I have a busy week…"
+        │
+        ▼
+ Assistant (mock rules now → LLM next)        language → intent
+        │  emits PlanRequest (zod schema; validated)
+        ▼
+ buildPlan(request, context)                  deterministic scheduling
+        │  reads: calendar events, tasks, blocks, preferences
+        │  emits: PlanProposal { operations[], notes[], summary }
+        ▼
+ Review screen (/plan-review)                 the user unticks anything
+        │
+        ▼
+ apply() → local changes + AppliedPlan record (for undo)
+        │
+        ▼
+ Notification reconciler → OS schedule
+```
+
+- **The split between AI and code is deliberate.** LLMs are good at understanding requests and bad at calendar arithmetic. The model only fills in a `PlanRequest` (horizon, priorities per day, habits with frequency and preferred time of day, message windows, reminders). The planner (`domain/planning/plan.ts`) is pure, tested code that finds free time (`availability.ts`), works around events with a buffer, picks message-window times that clash with the fewest meetings, fills priorities from due, overdue and unplanned tasks, and adds "leave for…" reminders before events that have a location or look important.
+- **`PlanRequest` is a zod schema** (`plan-request.ts`). The same schema becomes the LLM's structured-output/tool schema (`z.toJSONSchema`), and the app re-validates whatever comes back.
+- **Every operation is shown before it runs** and can be unticked. Applying creates an `AppliedPlan` record so the whole plan can be **undone**: blocks and reminders removed, priorities cleared, previous message windows restored. Planning is idempotent, so running it again doesn't duplicate existing blocks, priorities or reminders.
+- **Time blocks** (`TimeBlock`) are set-aside time owned by Intentional. They appear next to calendar events, labelled "Set aside". Until Google Calendar is connected they live only in the app and in notifications. Once it is connected, writing them to the calendar becomes an opt-in, per-plan choice (`time_blocks.external_event_id`).
+
+### Notifications (milestone 1.5)
+
+- `domain/notifications/schedule.ts` computes the notifications that **should** exist, as a pure function of tasks, blocks, the focus timer and preferences. `NotificationsProvider` compares that list with the OS schedule and applies only the difference. It reruns after every change and whenever the app returns to the foreground.
+- What notifies: reminders (at their time, or 9 AM on the day), the end of a focus session, the start of set-aside time (on by default, can be turned off), and message windows opening (off by default; turned on when a plan sets windows). Windows and blocks are silent during wind-down, from the wind-down time until 05:00. There are never engagement or "come back" notifications.
+- Calm by default: no sound in the foreground, a single Android channel with default importance, and no badges.
+- Permission is requested **in context**, the first time it's clearly useful (saving a reminder, starting a focus session, applying a plan, or the toggle in Focus settings), never on launch.
+- At most 60 notifications are scheduled, within iOS's limit of 64 per app, with a 7-day horizon.
+- A tapped notification opens the related screen (`data.url`). On web the notifier is a no-op.
+
 ---
 
 ## 2. Folder structure
@@ -73,16 +113,20 @@ intentional/
     │   ├── (tabs)/plan.tsx              Day / week planning
     │   ├── (tabs)/focus.tsx             Timer, insights, attention settings
     │   ├── task/new.tsx, task/[id].tsx  Create / edit / complete / delete
-    │   └── command.tsx                  Global "Capture or ask" input
+    │   ├── command.tsx                  Global "Capture or ask" input
+    │   └── plan-review.tsx              Review / apply / undo a proposed plan
     ├── domain/                          pure business logic + tests
     │   ├── dates.ts, result.ts, calendar.ts
     │   ├── tasks/       task.ts (validation, create/edit), task-reducer.ts, priorities.ts
-    │   ├── planning/    agenda.ts (day agenda, week overview, unplanned)
+    │   ├── planning/    agenda.ts, availability.ts (free time), plan-request.ts (zod),
+    │   │                plan.ts (planner + AppliedPlan), time-block.ts
+    │   ├── notifications/ schedule.ts (desired set + diff)
     │   ├── focus/       focus-timer.ts (state machine), focus-history.ts (insights)
     │   ├── communications/ communication.ts (triage queue, windows)
     │   └── today/       next-action.ts
-    ├── ai/              assistant.ts (contract), intent-parser.ts, mock-assistant.ts
-    ├── integrations/    types.ts, calendar/{provider,mock}, mail/{provider,mock}
+    ├── ai/              assistant.ts (contract), intent-parser.ts, plan-parser.ts, mock-assistant.ts
+    ├── integrations/    types.ts, calendar/{provider,mock}, mail/{provider,mock},
+    │                    notifications.ts (port + fake), expo-notifier(.web).ts
     ├── data/            key-value-store.ts, device-store.ts, document.ts, repositories.ts
     ├── state/           providers per concern, services (composition root), execute-action
     ├── theme/tokens.ts  colours, spacing, type scale, touch-target size
@@ -107,6 +151,10 @@ The full SQL is in `supabase/migrations/20261109000000_initial_schema.sql`. It i
 | `integration_secrets` | encrypted refresh tokens | RLS on with **no policies**, so it is service-role only |
 | `communication_items` | sender, subject, summary, triage | **no message bodies**; `expires_at` default 14 days; clients may only update `handled_at` |
 | `assistant_actions` | audit of external actions | kind, integration, confirmed, outcome; **no prompt or content** |
+| `applied_plans` | plan history for undo | validated `PlanRequest` JSON, ids touched, previous windows |
+| `time_blocks` | set-aside time | `plan_id`, optional `external_event_id` once written to a calendar |
+
+`attention_preferences` gains the planning hours, the notification toggles and the default reminder time (migration `20261110000000_planning_foundation.sql`).
 
 RLS is enabled on every table, and each row is limited to `auth.uid()`.
 
@@ -120,9 +168,10 @@ Root `Stack` (headerless), containing a bottom `Tabs` navigator and three modals
 |---|---|
 | **Today** `/` | See the single **next suggested action** (focus session › wind-down › imminent event › replies while a window is open › top priority › "put the phone down"), up to **three priorities** (with one-tap "Prioritise" suggestions), the rest of today's events, and a one-line message status. Usually done in under 10 seconds. |
 | **Messages** `/communications` | Triage queue grouped as *Needs a reply* / *Worth reading* / *Can wait*, with summaries labelled as mock. Outside communication windows, only time-sensitive items show, with a count of held items and "Show them anyway". Actions: **Done**, **Draft reply** (shows a suggestion and states that sending is unavailable), **Make task**. |
-| **Plan** `/plan` | Segmented **Day / Week**. Day: date stepper, calendar, tasks (overdue, then timed, then anytime), "Add to this day". Week: seven day cards with counts and previews, a gentle "looks full" note, tap to open a day. Both show **Not yet planned** for undated captures. Accepts `?view=week&date=YYYY-MM-DD`. |
-| **Focus** `/focus` | Start a session (optional intention, preset or ±5 min), pause/resume/end early, and a completion message. **This week**: minutes, sessions, a per-day bar chart, and the change from last week. No streaks or scores. **Attention settings**: communication windows, hold messages, wind-down time, default length, and an honest note about OS-level blocking. |
-| **Capture or ask** `/command` (modal) | Reached from the "Capture or ask…" bar at the top of every tab. Type a thought or request, the mock assistant proposes an action, and one tap confirms it. External requests show why they cannot be done and offer a local task instead. |
+| **Plan** `/plan` | A "Current plan" card with Undo when one was applied in the last week. Segmented **Day / Week**; set-aside blocks appear with events and can be removed. Day: date stepper, calendar, tasks (overdue, then timed, then anytime), "Add to this day". Week: seven day cards with counts and previews, a gentle "looks full" note, tap to open a day. Both show **Not yet planned** for undated captures. Accepts `?view=week&date=YYYY-MM-DD`. |
+| **Focus** `/focus` | Start a session (optional intention, preset or ±5 min), pause/resume/end early, and a completion message. **This week**: minutes, sessions, a per-day bar chart, and the change from last week. No streaks or scores. **Attention settings**: notifications (status, set-aside and window toggles), communication windows, hold messages, wind-down time, default length, and an honest note about OS-level blocking. |
+| **Capture or ask** `/command` (modal) | Reached from the "Capture or ask…" bar at the top of every tab. Type a thought or request, the mock assistant proposes an action, and one tap confirms it. Planning requests open **Review plan**. External requests show why they cannot be done and offer a local task instead. |
+| **Review plan** `/plan-review` (modal) | The plan's summary, then each change grouped as message windows, time set aside, priorities and reminders, each with its reason and a checkbox. "Apply N changes", then a confirmation with **Undo this plan**. States plainly that blocks aren't written to a calendar that isn't connected. |
 | **New task** `/task/new` (modal) | Title, task/reminder, day (Today/Tomorrow/No day + stepper), optional time, priority switch, notes. |
 | **Edit task** `/task/[id]` (modal) | Same form plus Mark complete / not done and Delete (with confirmation). |
 
@@ -140,12 +189,14 @@ Runtime (all aligned with Expo SDK 57's `bundledNativeModules.json`):
 | `expo-router` | file-based navigation (Stack + `expo-router/js-tabs`) |
 | `react-native-screens`, `react-native-safe-area-context` | required by navigation |
 | `@react-native-async-storage/async-storage` | local persistence |
+| `expo-notifications` | local notifications (reminders, focus end, plan blocks, windows) |
+| `zod` | `PlanRequest` schema: validates assistant/LLM output and generates the tool JSON schema |
 | `expo-status-bar`, `expo-constants`, `expo-linking` | router peers / status bar |
 | `react-dom`, `react-native-web` | web preview for quick review |
 
 Dev: `typescript` ~5.9 (strict), `jest` + `jest-expo` + `@types/jest`, `eslint` + `eslint-config-expo`.
 
-These were **deliberately not added yet**: `@supabase/supabase-js`, `expo-auth-session`, `expo-secure-store`, `expo-notifications`, and any date or state library. Each arrives with the milestone that needs it, so the prototype has no dormant network code.
+These were **deliberately not added yet**: `@supabase/supabase-js`, `expo-auth-session`, `expo-secure-store`, and any date or state library. Each arrives with the milestone that needs it, so the prototype has no dormant network code.
 
 ---
 
@@ -161,15 +212,15 @@ These were **deliberately not added yet**: `@supabase/supabase-js`, `expo-auth-s
 6. UI kit, then the four tabs, the task modals, and the command modal.
 7. Verification: `tsc`, `expo lint`, `jest`, web export with a headless browser smoke test, and iOS/Android bundle export.
 
-**Proposed next milestones (each needs review first):**
+**Milestone 1.5 (done):** real local notifications, plus the planning foundation: availability, the `PlanRequest` schema, the deterministic planner, plan review, apply and undo, and time blocks.
 
-2. **Supabase:** auth (email magic link), `SupabaseTaskRepository` with the local document as an offline cache and last-write-wins sync on `updated_at`, then the remaining tables.
-3. **Notifications:** `expo-notifications` for reminders and focus completion. These are local only, opt-in, and quiet by default.
-4. **Google Calendar (read-only first):** OAuth through an Edge Function, tokens in `integration_secrets`, and a `GoogleCalendarProvider` behind the same interface. Write access comes later and needs per-change confirmation.
-5. **Gmail:** server-side triage and summarisation into `communication_items`. Bodies are processed in memory and never stored. Sending requires an explicit review-and-send step.
-6. **Server-side LLM:** a `RemoteAssistant` that calls an Edge Function with structured output validated against `ProposedAction`.
-7. **Native attention features:** iOS FamilyControls/DeviceActivity and Android UsageStats as Expo Modules, subject to the platform caveats below.
+**Next, in order. The aim is to reach real Calendar and AI quickly.**
 
+2. **Backend skeleton (small):** a Supabase project, email magic-link auth, and two Edge Functions (`assistant` and `google-oauth`). Tasks and blocks stay local-first; sync can follow later. Auth is needed now only because the AI and OAuth must run server-side.
+3. **Google Calendar, read-only:** OAuth (PKCE via `expo-auth-session`), with the code exchanged in the Edge Function and the refresh token encrypted in `integration_secrets`. A `GoogleCalendarProvider` behind the existing interface, using `events.list` and `freeBusy` across the user's chosen calendars. From then on the planner uses real availability. This needs a development build, not Expo Go, for the OAuth redirect.
+4. **Real AI:** `RemoteAssistant` → Edge Function → LLM, with `PlanRequest` (and the simple actions) as the structured-output schema. The context is minimal (counts, titles, free/busy, never message bodies), the output is validated with zod, and it falls back to the mock if the call fails.
+5. **Calendar write (opt-in):** "Add set-aside time to Google Calendar" on the review screen. Each plan needs explicit confirmation, and every write is logged in `assistant_actions`.
+6. **Gmail** (after Google's restricted-scope verification), then native attention features (Screen Time / UsageStats).
 ---
 
 ## 7. Platform limitations & risks
@@ -180,7 +231,9 @@ These were **deliberately not added yet**: `@supabase/supabase-js`, `expo-auth-s
 | **Android usage limits** | `PACKAGE_USAGE_STATS` needs a manual grant in Settings. Accessibility-service blocking is restricted by Play policy. | Use UsageStats for insights only. No Accessibility workarounds. |
 | **Notifications from other apps** | Neither OS lets third-party apps silence other apps' notifications (Android's listener can only read). | Point users to OS Focus / Do Not Disturb modes; do not try to bypass them. |
 | **Expo Go** | Fine for this milestone (no custom native code). Native attention features will need a development build (`expo-dev-client`). | Plan the EAS development build before milestone 7. |
-| **Background timers** | JS timers pause in the background. | The timer stores absolute timestamps and catches up on resume. A completion notification arrives with `expo-notifications`. |
+| **Background timers** | JS timers pause in the background. | The timer stores absolute timestamps and catches up on resume. A scheduled local notification fires at the end even if the app is closed. |
+| **Notifications in Expo Go** | Expo Go has limited notification support (no remote push on Android). This app uses only local notifications. | If local notifications misbehave in Expo Go, use a development build. That is needed for Google OAuth anyway. |
+| **Plan quality** | The rule-based mock understands a narrow set of phrasings. | Replaced by the LLM behind the same `PlanRequest` schema. The planner stays deterministic and tested either way. |
 | **Google OAuth verification** | Gmail scopes are "restricted" and require Google's security assessment (CASA), which takes time and costs money. | Start with Calendar read-only. Budget for the assessment before Gmail. |
 | **AI privacy & correctness** | Sending email content to an LLM is sensitive, and models can misread intent. | Server-side only, minimal context, no storage of bodies, structured output with validation, and confirmation of every action. |
 | **Local data security** | AsyncStorage is unencrypted. | Fine for tasks. Tokens never live on the device; any device secret uses `expo-secure-store`. |

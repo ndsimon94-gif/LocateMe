@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { toLocalDate } from '@/domain/dates';
+import { useNotifications } from '@/state/notifications-store';
 import { useTasks } from '@/state/tasks-store';
 import { space } from '@/theme/tokens';
 import { Button } from '@/ui/button';
@@ -13,6 +14,7 @@ import { Text } from '@/ui/text';
 
 export default function EditTaskScreen() {
   const router = useRouter();
+  const notifications = useNotifications();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { getTask, updateTask, setCompleted, deleteTask } = useTasks();
   const task = getTask(id);
@@ -51,6 +53,7 @@ export default function EditTaskScreen() {
         onSubmit={(draft) => {
           const r = updateTask(task.id, draft);
           if (!r.ok) return r.error;
+          if (r.value.kind === 'reminder') void notifications.requestIfNeeded();
           router.back();
           return null;
         }}

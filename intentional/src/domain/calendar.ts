@@ -11,6 +11,8 @@ export interface CalendarEvent {
   allDay?: boolean;
   /** True for generated sample data. The UI must label these. */
   isMock: boolean;
+  /** 'intentional' for time blocks created in this app; absent for calendar events. */
+  origin?: 'intentional';
 }
 
 export function eventDate(event: CalendarEvent): LocalDate {

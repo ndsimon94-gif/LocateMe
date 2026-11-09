@@ -5,12 +5,14 @@ import { windowStatus, needsReplyCount } from '@/domain/communications/communica
 import { addDays, formatTimeOfDate, greetingFor, longDate, toLocalDate } from '@/domain/dates';
 import { remainingMs } from '@/domain/focus/focus-timer';
 import { priorityCandidates, todaysPriorities } from '@/domain/tasks/priorities';
+import { blockToEvent } from '@/domain/planning/time-block';
 import { MAX_DAILY_PRIORITIES } from '@/domain/tasks/task';
 import { nextSuggestedAction } from '@/domain/today/next-action';
 import { useCalendarEvents } from '@/state/calendar';
 import { useClock } from '@/state/clock';
 import { useCommunications } from '@/state/communications-store';
 import { useFocus } from '@/state/focus-store';
+import { usePlans } from '@/state/plans-store';
 import { usePreferences } from '@/state/preferences-store';
 import { useTasks } from '@/state/tasks-store';
 import { colors, space } from '@/theme/tokens';
@@ -29,7 +31,9 @@ export default function TodayScreen() {
   const now = useClock(30_000);
   const today = toLocalDate(now);
   const { tasks, updateTask } = useTasks();
-  const { events, integration } = useCalendarEvents(today, addDays(today, 1));
+  const { events: calendarEvents, integration } = useCalendarEvents(today, addDays(today, 1));
+  const { blocks } = usePlans();
+  const events = [...calendarEvents, ...blocks.filter((b) => b.date === today).map(blockToEvent)].sort((a, b) => (a.start < b.start ? -1 : 1));
   const comms = useCommunications();
   const focus = useFocus();
   const { preferences } = usePreferences();

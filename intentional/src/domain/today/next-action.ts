@@ -71,6 +71,14 @@ export function nextSuggestedAction(input: NextActionInput): NextAction {
     })
     .sort((a, b) => a.start.getTime() - b.start.getTime())[0];
   if (soon) {
+    if (soon.e.origin === 'intentional') {
+      return {
+        title: `Coming up: ${soon.e.title.toLowerCase()}`,
+        detail: `You set aside ${formatTimeOfDate(soon.start)}–${formatTimeOfDate(new Date(soon.e.end))}. A good moment to put the phone down.`,
+        cta: null,
+        target: { screen: 'none' },
+      };
+    }
     return {
       title: `Get ready for ${soon.e.title}`,
       detail: `Starts at ${formatTimeOfDate(soon.start)}${soon.e.location ? ` · ${soon.e.location}` : ''}.`,

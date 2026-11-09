@@ -1,6 +1,8 @@
 import type { CommunicationWindow } from '@/domain/communications/communication';
 import type { FocusSessionRecord } from '@/domain/focus/focus-history';
 import type { FocusTimerState } from '@/domain/focus/focus-timer';
+import type { AppliedPlan } from '@/domain/planning/plan';
+import type { TimeBlock } from '@/domain/planning/time-block';
 import type { Task } from '@/domain/tasks/task';
 
 import { createDocument, type StoredDocument } from './document';
@@ -17,8 +19,13 @@ export interface AttentionPreferences {
   defaultFocusMinutes: number;
   /** Hide non-urgent messages outside communication windows. */
   holdMessagesOutsideWindows: boolean;
-  /** Don't show the "next suggested action" card after this time. */
+  /** Don't suggest work, and keep plan/window notifications quiet, after this time (until 05:00). */
   windDownTime: string | null;
+  /** Hours the planner may place things in. */
+  planningHours: { start: string; end: string };
+  notifyCommunicationWindows: boolean;
+  notifyTimeBlocks: boolean;
+  defaultReminderTime: string;
 }
 
 export const defaultPreferences: AttentionPreferences = {
@@ -29,6 +36,10 @@ export const defaultPreferences: AttentionPreferences = {
   defaultFocusMinutes: 25,
   holdMessagesOutsideWindows: true,
   windDownTime: '21:30',
+  planningHours: { start: '07:00', end: '21:00' },
+  notifyCommunicationWindows: false,
+  notifyTimeBlocks: true,
+  defaultReminderTime: '09:00',
 };
 
 const isArray = (v: unknown): v is unknown[] => Array.isArray(v);
@@ -43,6 +54,8 @@ export interface Repositories {
   activeFocus: StoredDocument<FocusTimerState>;
   preferences: StoredDocument<AttentionPreferences>;
   handledCommunications: StoredDocument<string[]>;
+  timeBlocks: StoredDocument<TimeBlock[]>;
+  appliedPlans: StoredDocument<AppliedPlan[]>;
 }
 
 export function createLocalRepositories(store: KeyValueStore): Repositories {
@@ -70,5 +83,7 @@ export function createLocalRepositories(store: KeyValueStore): Repositories {
       () => [],
       (v): v is string[] => isArray(v) && v.every((x) => typeof x === 'string'),
     ),
+    timeBlocks: createDocument(store, 'intentional.timeBlocks', 1, () => [], (v): v is TimeBlock[] => isArray(v) && v.every((b) => isObject(b) && typeof b.id === 'string')),
+    appliedPlans: createDocument(store, 'intentional.appliedPlans', 1, () => [], (v): v is AppliedPlan[] => isArray(v)),
   };
 }

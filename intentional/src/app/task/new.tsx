@@ -1,12 +1,14 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { isLocalDate, toLocalDate } from '@/domain/dates';
+import { useNotifications } from '@/state/notifications-store';
 import { useTasks } from '@/state/tasks-store';
 import { ModalScreen } from '@/ui/modal-screen';
 import { TaskForm } from '@/ui/task-form';
 
 export default function NewTaskScreen() {
   const router = useRouter();
+  const notifications = useNotifications();
   const { date } = useLocalSearchParams<{ date?: string }>();
   const { addTask } = useTasks();
   const today = toLocalDate(new Date());
@@ -20,6 +22,7 @@ export default function NewTaskScreen() {
         onSubmit={(draft) => {
           const r = addTask(draft);
           if (!r.ok) return r.error;
+          if (r.value.kind === 'reminder') void notifications.requestIfNeeded();
           router.back();
           return null;
         }}

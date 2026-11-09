@@ -1,4 +1,5 @@
 import type { AppRoute, ProposedAction } from '@/ai/assistant';
+import type { PlanRequest } from '@/domain/planning/plan-request';
 import type { Result } from '@/domain/result';
 import type { Task, TaskDraft } from '@/domain/tasks/task';
 
@@ -6,6 +7,8 @@ export interface ActionDeps {
   addTask(draft: TaskDraft): Result<Task>;
   startFocus(intention: string, minutes: number): void;
   navigate(to: AppRoute, params?: Record<string, string>): void;
+  /** Builds a proposal from the request and opens the review screen. Nothing is applied yet. */
+  reviewPlan(request: PlanRequest): void;
 }
 
 export type ActionOutcome = { ok: true; message: string } | { ok: false; message: string };
@@ -27,6 +30,9 @@ export function executeAction(action: ProposedAction, deps: ActionDeps): ActionO
       return { ok: true, message: 'Focus session started.' };
     case 'navigate':
       deps.navigate(action.to, action.params);
+      return { ok: true, message: '' };
+    case 'propose_plan':
+      deps.reviewPlan(action.request);
       return { ok: true, message: '' };
     case 'requires_authorization':
       return { ok: false, message: `${action.reason} Nothing was sent or changed.` };

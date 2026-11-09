@@ -94,7 +94,7 @@ export function TaskForm({ initial, today, submitLabel, onSubmit }: Props) {
 
       {values.kind === 'reminder' ? (
         <Text variant="small" muted>
-          Reminders show in your plan. Phone notifications aren&apos;t enabled in this prototype.
+          You&apos;ll get a quiet notification {values.dueTime.trim() ? 'at this time' : 'at 9 AM on the day'}.
         </Text>
       ) : null}
 

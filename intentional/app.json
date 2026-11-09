@@ -7,9 +7,23 @@
     "scheme": "intentional",
     "userInterfaceStyle": "light",
     "backgroundColor": "#F6F3EC",
-    "ios": { "supportsTablet": false },
-    "android": { "predictiveBackGestureEnabled": false },
-    "web": { "output": "single" },
-    "plugins": ["expo-router"]
+    "ios": {
+      "supportsTablet": false
+    },
+    "android": {
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-notifications",
+        {
+          "color": "#3E5C47"
+        }
+      ]
+    ]
   }
 }

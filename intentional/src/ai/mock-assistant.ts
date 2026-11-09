@@ -3,6 +3,7 @@ import { clampMinutes } from '@/domain/focus/focus-timer';
 
 import type { Assistant, AssistantContext, AssistantResponse, ProposedAction } from './assistant';
 import { parseIntent } from './intent-parser';
+import { looksLikePlanningRequest, parsePlanningRequest } from './plan-parser';
 
 function when(dueDate: string | null, dueTime: string | null, now: Date): string {
   if (!dueDate) return '';
@@ -12,8 +13,28 @@ function when(dueDate: string | null, dueTime: string | null, now: Date): string
 
 /** Deterministic, offline assistant for the prototype. Never calls a network. */
 export function respondLocally(input: string, ctx: AssistantContext): AssistantResponse {
-  const intent = parseIntent(input, ctx.now);
   const reply = (message: string, actions: ProposedAction[] = []): AssistantResponse => ({ message, actions, provider: 'mock' });
+
+  if (looksLikePlanningRequest(input)) {
+    const request = parsePlanningRequest(input, ctx.now);
+    const asks: string[] = [];
+    if (request.priorities) asks.push('pick priorities');
+    for (const h of request.habits ?? []) asks.push(`find time for ${h.title.toLowerCase()}`);
+    if (request.communicationWindows) asks.push(`set ${request.communicationWindows.perDay} message windows a day`);
+    if (request.reminders?.importantEvents) asks.push('add reminders before important events');
+    if (asks.length === 0) {
+      return reply('I can plan priorities, exercise or other habits, message windows and reminders. Which would help?', [
+        { kind: 'navigate', label: 'Open weekly plan', to: '/plan', params: { view: 'week' } },
+      ]);
+    }
+    const last = asks.pop();
+    const list = asks.length ? `${asks.join(', ')} and ${last}` : last;
+    return reply(`I'll ${list}. You'll see every change before anything is applied.`, [
+      { kind: 'propose_plan', label: 'Review the plan', request },
+    ]);
+  }
+
+  const intent = parseIntent(input, ctx.now);
 
   switch (intent.type) {
     case 'empty':

@@ -4,9 +4,11 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { addDays, dayHeading, formatTimeOfDate, isLocalDate, relativeDayLabel, shortDate, startOfWeek, toLocalDate, type LocalDate } from '@/domain/dates';
 import { agendaForDay, busiestDay, unplannedTasks, weekOverview, type DayAgenda } from '@/domain/planning/agenda';
+import { blockToEvent } from '@/domain/planning/time-block';
 import { isOpen } from '@/domain/tasks/task';
 import { useCalendarEvents } from '@/state/calendar';
 import { useClock } from '@/state/clock';
+import { usePlans } from '@/state/plans-store';
 import { useTasks } from '@/state/tasks-store';
 import { colors, MIN_TOUCH, radius, space } from '@/theme/tokens';
 import { Button } from '@/ui/button';
@@ -25,7 +27,8 @@ type Mode = 'day' | 'week';
 export default function PlanScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ view?: string; date?: string }>();
-  const today = toLocalDate(useClock());
+  const now = useClock();
+  const today = toLocalDate(now);
   const [mode, setMode] = useState<Mode>(params.view === 'week' ? 'week' : 'day');
   const [date, setDate] = useState<LocalDate>(params.date && isLocalDate(params.date) ? params.date : today);
 
@@ -40,7 +43,11 @@ export default function PlanScreen() {
 
   const weekStart = startOfWeek(date);
   const { tasks } = useTasks();
-  const { events, integration } = useCalendarEvents(weekStart, addDays(weekStart, 7));
+  const { events: calendarEvents, integration } = useCalendarEvents(weekStart, addDays(weekStart, 7));
+  const { blocks, appliedPlans, undo } = usePlans();
+  // Time set aside through Intentional shows alongside calendar events.
+  const events = [...calendarEvents, ...blocks.map(blockToEvent)];
+  const recentPlan = [...appliedPlans].reverse().find((p) => !p.undone && now.getTime() - new Date(p.appliedAt).getTime() < 7 * 86_400_000);
 
   const addTask = (d: LocalDate | null) =>
     router.push({ pathname: '/task/new', params: d ? { date: d } : {} });
@@ -56,6 +63,16 @@ export default function PlanScreen() {
           { value: 'week', label: 'Week' },
         ]}
       />
+
+      {recentPlan ? (
+        <Card>
+          <Text variant="label" muted>
+            Current plan
+          </Text>
+          <Text>{recentPlan.summary}</Text>
+          <Button compact tone="quiet" label="Undo plan" style={styles.left} onPress={() => undo(recentPlan.id)} accessibilityHint="Removes the time blocks, reminders and priorities this plan added" />
+        </Card>
+      ) : null}
 
       {mode === 'day' ? (
         <DayView
@@ -140,7 +157,7 @@ function DayView({
       <DateNav label={label} onPrev={() => onShift(-1)} onNext={() => onShift(1)} onReset={isToday ? undefined : onToday} resetLabel="Back to today" />
 
       <Section title="Calendar" trailing={mock ? <SampleBadge /> : null}>
-        {agenda.events.length === 0 ? <EmptyState title="No events" /> : agenda.events.map((e) => <EventRow key={e.id} event={e} />)}
+        {agenda.events.length === 0 ? <EmptyState title="No events" /> : agenda.events.map((e) => <EventRow key={e.id} event={e} removable />)}
       </Section>
 
       <Section title="Tasks & reminders">

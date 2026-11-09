@@ -45,6 +45,7 @@ describe('executeAction', () => {
     addTask: jest.fn((draft) => ({ ok: true as const, value: { ...draft, id: '1' } })),
     startFocus: jest.fn(),
     navigate: jest.fn(),
+    reviewPlan: jest.fn(),
   });
 
   it('refuses actions that require authorisation, even if dispatched', () => {
@@ -56,6 +57,14 @@ describe('executeAction', () => {
     expect(r.ok).toBe(false);
     expect(d.addTask).not.toHaveBeenCalled();
     expect(d.navigate).not.toHaveBeenCalled();
+  });
+
+  it('opens plan review for plan proposals without applying anything', () => {
+    const d = deps();
+    const request = { horizon: { from: '2026-11-09', days: 7 }, priorities: { perDay: 3 } };
+    executeAction({ kind: 'propose_plan', label: 'Review', request }, d);
+    expect(d.reviewPlan).toHaveBeenCalledWith(request);
+    expect(d.addTask).not.toHaveBeenCalled();
   });
 
   it('runs local actions', () => {
