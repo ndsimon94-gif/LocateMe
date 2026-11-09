@@ -19,4 +19,8 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     : context.resolveRequest(context, moduleName, platform);
 };
 
+// `intentional/` is a separate Expo project with its own node_modules.
+const intentionalDir = require('path').join(__dirname, 'intentional');
+config.resolver.blockList = [new RegExp(`^${intentionalDir.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[/\\\\].*`)];
+
 module.exports = config;

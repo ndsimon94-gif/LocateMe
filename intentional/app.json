@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "Intentional",
+    "slug": "intentional",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "intentional",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F6F3EC",
+    "ios": { "supportsTablet": false },
+    "android": { "predictiveBackGestureEnabled": false },
+    "web": { "output": "single" },
+    "plugins": ["expo-router"]
+  }
+}
