@@ -16,6 +16,9 @@ export default function RootLayout() {
         <Stack.Screen name="task/[id]" options={{ presentation: 'modal' }} />
         <Stack.Screen name="command" options={{ presentation: 'modal' }} />
         <Stack.Screen name="plan-review" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="auth-callback" />
+        <Stack.Screen name="google-connected" />
       </Stack>
     </AppProviders>
   );

@@ -14,8 +14,8 @@ import { colors, MIN_TOUCH, radius, space } from '@/theme/tokens';
 import { Button } from '@/ui/button';
 import { Card } from '@/ui/card';
 import { EmptyState } from '@/ui/empty-state';
+import { CalendarSource } from '@/ui/calendar-source';
 import { EventRow } from '@/ui/event-row';
-import { SampleBadge } from '@/ui/sample-badge';
 import { Screen } from '@/ui/screen';
 import { Section } from '@/ui/section';
 import { Segmented } from '@/ui/segmented';
@@ -43,7 +43,7 @@ export default function PlanScreen() {
 
   const weekStart = startOfWeek(date);
   const { tasks } = useTasks();
-  const { events: calendarEvents, integration } = useCalendarEvents(weekStart, addDays(weekStart, 7));
+  const { events: calendarEvents, integration, error: calendarError } = useCalendarEvents(weekStart, addDays(weekStart, 7));
   const { blocks, appliedPlans, undo } = usePlans();
   // Time set aside through Intentional shows alongside calendar events.
   const events = [...calendarEvents, ...blocks.map(blockToEvent)];
@@ -63,6 +63,8 @@ export default function PlanScreen() {
           { value: 'week', label: 'Week' },
         ]}
       />
+
+      <CalendarSource integration={integration} error={calendarError} />
 
       {recentPlan ? (
         <Card>
@@ -156,7 +158,7 @@ function DayView({
     <>
       <DateNav label={label} onPrev={() => onShift(-1)} onNext={() => onShift(1)} onReset={isToday ? undefined : onToday} resetLabel="Back to today" />
 
-      <Section title="Calendar" trailing={mock ? <SampleBadge /> : null}>
+      <Section title="Calendar">
         {agenda.events.length === 0 ? <EmptyState title="No events" /> : agenda.events.map((e) => <EventRow key={e.id} event={e} removable />)}
       </Section>
 
@@ -202,7 +204,6 @@ function WeekView({
         <Text muted>
           {days.eventCount} {days.eventCount === 1 ? 'event' : 'events'} · {days.openTaskCount} open {days.openTaskCount === 1 ? 'task' : 'tasks'}
         </Text>
-        {mock ? <SampleBadge label="Sample calendar" /> : null}
       </View>
       {busy ? (
         <Text variant="small" muted>

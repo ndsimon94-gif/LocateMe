@@ -214,7 +214,9 @@ These were **deliberately not added yet**: `@supabase/supabase-js`, `expo-auth-s
 
 **Milestone 1.5 (done):** real local notifications, plus the planning foundation: availability, the `PlanRequest` schema, the deterministic planner, plan review, apply and undo, and time blocks.
 
-**Next, in order. The aim is to reach real Calendar and AI quickly.**
+**Milestone 2 (done):** Supabase project with the schema applied; email-link sign-in (PKCE); `google`, `google-oauth-callback` and `assistant` Edge Functions; read-only Google Calendar feeding the planner (all-day and "free" events don't block time; declined and cancelled events are dropped; only id, title, times and location leave the server); Claude assistant using structured output against `supabase/functions/assistant/output-schema.ts`, re-validated in `src/ai/interpret-output.ts`, with fallback to the on-device assistant.
+
+**Originally planned order (items 2 to 4 are now done):**
 
 2. **Backend skeleton (small):** a Supabase project, email magic-link auth, and two Edge Functions (`assistant` and `google-oauth`). Tasks and blocks stay local-first; sync can follow later. Auth is needed now only because the AI and OAuth must run server-side.
 3. **Google Calendar, read-only:** OAuth (PKCE via `expo-auth-session`), with the code exchanged in the Edge Function and the refresh token encrypted in `integration_secrets`. A `GoogleCalendarProvider` behind the existing interface, using `events.list` and `freeBusy` across the user's chosen calendars. From then on the planner uses real availability. This needs a development build, not Expo Go, for the OAuth redirect.

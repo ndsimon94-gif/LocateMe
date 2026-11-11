@@ -1,11 +1,13 @@
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Switch, View } from 'react-native';
 
 import { clockTimeToMinutes, formatClock, toLocalDate, weekdayName, dayOfWeek, type ClockTime } from '@/domain/dates';
 import { formatMinutes, weeklyFocusSummary } from '@/domain/focus/focus-history';
 import { clampMinutes, formatCountdown, remainingMs } from '@/domain/focus/focus-timer';
+import { useAuth } from '@/state/auth-store';
 import { useClock } from '@/state/clock';
+import { useConnections } from '@/state/connections-store';
 import { useFocus } from '@/state/focus-store';
 import { useNotifications } from '@/state/notifications-store';
 import { usePreferences } from '@/state/preferences-store';
@@ -180,6 +182,7 @@ function AttentionSettings() {
 
   return (
     <Section title="Attention settings">
+      <AccountLink />
       <NotificationSettings />
       <Card>
         <Text variant="heading">Communication windows</Text>
@@ -255,6 +258,21 @@ function AttentionSettings() {
         </Text>
       </Card>
     </Section>
+  );
+}
+
+function AccountLink() {
+  const router = useRouter();
+  const { session } = useAuth();
+  const { google } = useConnections();
+  return (
+    <Card>
+      <Text variant="heading">Account &amp; connections</Text>
+      <Text variant="small" muted>
+        {!session ? 'Not signed in. Using sample calendar and the on-device assistant.' : google === 'connected' ? 'Signed in · Google Calendar connected · Claude assistant' : 'Signed in · Claude assistant · Calendar not connected'}
+      </Text>
+      <Button compact tone="secondary" label="Manage" style={styles.left} onPress={() => router.push('/settings')} />
+    </Card>
   );
 }
 

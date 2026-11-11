@@ -27,7 +27,7 @@ export function mergeIntervals(intervals: Interval[]): Interval[] {
 export function busyIntervals(date: LocalDate, events: CalendarEvent[]): Interval[] {
   const intervals: Interval[] = [];
   for (const e of events) {
-    if (e.allDay) continue;
+    if (e.allDay || e.showAsFree) continue;
     const start = new Date(e.start);
     const end = new Date(e.end);
     const startDay = toLocalDate(start);

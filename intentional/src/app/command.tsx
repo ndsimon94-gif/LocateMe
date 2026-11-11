@@ -7,8 +7,10 @@ import { needsReplyCount } from '@/domain/communications/communication';
 import { addDays, toLocalDate } from '@/domain/dates';
 import { todaysPriorities } from '@/domain/tasks/priorities';
 import { isOpen } from '@/domain/tasks/task';
+import { useAuth } from '@/state/auth-store';
 import { useCalendarEvents } from '@/state/calendar';
 import { useCommunications } from '@/state/communications-store';
+import { useConnections } from '@/state/connections-store';
 import { executeAction } from '@/state/execute-action';
 import { useFocus } from '@/state/focus-store';
 import { useNotifications } from '@/state/notifications-store';
@@ -34,10 +36,13 @@ export default function CommandScreen() {
   const router = useRouter();
   const inputRef = useRef<TextInput>(null);
   const { assistant } = useServices();
+  const { session } = useAuth();
+  const assistantIsRemote = Boolean(session);
   const { tasks, addTask } = useTasks();
   const focus = useFocus();
   const comms = useCommunications();
   const plans = usePlans();
+  const { google } = useConnections();
   const notifications = useNotifications();
   const now = new Date();
   const today = toLocalDate(now);
@@ -59,8 +64,7 @@ export default function CommandScreen() {
         priorityTitles: todaysPriorities(tasks, today).map((t) => t.title),
         openTaskCount: tasks.filter(isOpen).length,
         needsReplyCount: needsReplyCount(comms.items, comms.handledIds),
-        // Nothing is connected in this milestone.
-        connectedIntegrations: new Set(),
+        connectedIntegrations: new Set(google === 'connected' ? (['google_calendar'] as const) : []),
       });
       setResponse(r);
     } finally {
@@ -130,7 +134,7 @@ export default function CommandScreen() {
             <Text variant="label" muted style={styles.flex}>
               Assistant
             </Text>
-            {response.provider === 'mock' ? <SampleBadge label="Mock assistant" /> : null}
+            {response.provider === 'mock' ? <SampleBadge label="On-device assistant" /> : <Text variant="small" muted>Claude</Text>}
           </View>
           <Text>{response.message}</Text>
           {response.actions.map((a, i) => (
@@ -159,7 +163,9 @@ export default function CommandScreen() {
             </Pressable>
           ))}
           <Text variant="small" muted>
-            Runs entirely on this device. Nothing you type here is sent anywhere.
+            {assistantIsRemote
+              ? 'Sent to Claude with today’s event titles and priorities. Claude only suggests; you confirm.'
+              : 'Runs entirely on this device. Nothing you type here is sent anywhere.'}
           </Text>
         </View>
       ) : null}

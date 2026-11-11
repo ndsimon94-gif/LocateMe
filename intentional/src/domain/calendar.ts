@@ -13,6 +13,8 @@ export interface CalendarEvent {
   isMock: boolean;
   /** 'intentional' for time blocks created in this app; absent for calendar events. */
   origin?: 'intentional';
+  /** Marked "free" in the calendar: shown, but doesn't block time for planning. */
+  showAsFree?: boolean;
 }
 
 export function eventDate(event: CalendarEvent): LocalDate {

@@ -19,6 +19,7 @@ import { colors, space } from '@/theme/tokens';
 import { Button } from '@/ui/button';
 import { Card } from '@/ui/card';
 import { EmptyState } from '@/ui/empty-state';
+import { CalendarSource } from '@/ui/calendar-source';
 import { EventRow } from '@/ui/event-row';
 import { SampleBadge } from '@/ui/sample-badge';
 import { Screen } from '@/ui/screen';
@@ -31,7 +32,7 @@ export default function TodayScreen() {
   const now = useClock(30_000);
   const today = toLocalDate(now);
   const { tasks, updateTask } = useTasks();
-  const { events: calendarEvents, integration } = useCalendarEvents(today, addDays(today, 1));
+  const { events: calendarEvents, integration, error: calendarError } = useCalendarEvents(today, addDays(today, 1));
   const { blocks } = usePlans();
   const events = [...calendarEvents, ...blocks.filter((b) => b.date === today).map(blockToEvent)].sort((a, b) => (a.start < b.start ? -1 : 1));
   const comms = useCommunications();
@@ -109,7 +110,8 @@ export default function TodayScreen() {
         <Button tone="quiet" compact label="Add a task" onPress={() => router.push({ pathname: '/task/new', params: { date: today } })} style={styles.left} />
       </Section>
 
-      <Section title="Coming up" trailing={integration.isMock ? <SampleBadge /> : null}>
+      <Section title="Coming up">
+        <CalendarSource integration={integration} error={calendarError} />
         {upcoming.length === 0 ? (
           <EmptyState title="Nothing else scheduled" body="The rest of the day is yours." />
         ) : (

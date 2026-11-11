@@ -97,10 +97,11 @@ create table public.integration_connections (
 );
 
 -- Server-only token storage. RLS enabled with NO policies => only the service role
--- (Edge Functions) can read or write. Tokens are encrypted with a key held in Vault.
+-- (Edge Functions) can read or write. Tokens are encrypted with a key held in function secrets.
 create table public.integration_secrets (
   connection_id           uuid primary key references public.integration_connections (id) on delete cascade,
-  encrypted_refresh_token bytea not null,
+  -- AES-GCM ciphertext (base64, iv-prefixed). The key lives only in Edge Function secrets.
+  encrypted_refresh_token text not null,
   key_id                  text not null,
   updated_at              timestamptz not null default now()
 );

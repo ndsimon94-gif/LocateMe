@@ -2,7 +2,7 @@
 
 An AI personal operating system for digital wellbeing. It organizes your day and protects your attention, and the best use of it is a short one.
 
-**Status: milestone 1.5.** Everything runs on the device. Notifications are real (local). The calendar, messages and assistant are still **mock implementations**, labelled as sample data in the UI. Nothing connects to Google, Supabase or an LLM yet.
+**Status: milestone 2.** Tasks and plans stay on the device; notifications are real (local). Signing in (email link) unlocks two real services, both run through the Supabase backend: **Google Calendar (read-only)**, so plans use your real free time, and the **Claude assistant**. Signed out, the app uses clearly labelled sample events and an on-device assistant. Messages are still sample data.
 
 The design write-up is in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). It covers the architecture, folder structure, schema, screens, dependencies, plan and platform risks.
 
@@ -15,6 +15,16 @@ The design write-up is in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). It cov
 - **Capture or ask:** a natural-language input on every tab, backed by a deterministic mock assistant.
 - **Planning:** ask something like *"I have a busy week. Organize my priorities, find time for exercise, remind me of anything important, and give me two windows each day to respond to messages."* You get a concrete plan to review: message-window times that avoid meetings, exercise in free time, priorities, and "leave for…" reminders. Apply it, and undo it if needed.
 - **Notifications:** reminders, the end of a focus session, the start of set-aside time, and message windows opening. They are quiet, asked for in context, and never used to pull you back into the app.
+
+## Backend (Supabase)
+
+- `supabase/migrations/`: schema with row-level security on every table, applied to the project.
+- `supabase/functions/`: Edge Functions (Deno):
+  - `google`: start the OAuth flow, report status, list events (minimal fields), disconnect
+  - `google-oauth-callback`: exchanges Google's code server-side and stores the refresh token AES-GCM-encrypted
+  - `assistant`: calls Claude with structured output; the app re-validates everything it returns
+- Function secrets (set in the Supabase dashboard, never in the repo): `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `TOKEN_ENCRYPTION_KEY`, `claudeapikey`; optional `CLAUDE_MODEL` (default `claude-opus-5-5`).
+- Public client config is in `.env` (project URL, publishable key).
 
 ## Develop
 
