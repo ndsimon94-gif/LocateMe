@@ -3,7 +3,6 @@ import { useRef, useState } from 'react';
 import { Pressable, StyleSheet, View, type TextInput } from 'react-native';
 
 import type { AssistantResponse, ProposedAction } from '@/ai/assistant';
-import { needsReplyCount } from '@/domain/communications/communication';
 import { addDays, toLocalDate } from '@/domain/dates';
 import { todaysPriorities } from '@/domain/tasks/priorities';
 import { isOpen } from '@/domain/tasks/task';
@@ -63,7 +62,7 @@ export default function CommandScreen() {
         todayEventTitles: events.map((e) => e.title),
         priorityTitles: todaysPriorities(tasks, today).map((t) => t.title),
         openTaskCount: tasks.filter(isOpen).length,
-        needsReplyCount: needsReplyCount(comms.items, comms.handledIds),
+        needsReplyCount: comms.needsReplyCount,
         connectedIntegrations: new Set(google === 'connected' ? (['google_calendar'] as const) : []),
       });
       setResponse(r);

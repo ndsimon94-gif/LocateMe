@@ -1,38 +1,44 @@
+import { Ionicons } from '@expo/vector-icons';
+import { Redirect } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
-import { StyleSheet, View } from 'react-native';
+import type { ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { usePreferences } from '@/state/preferences-store';
 import { colors } from '@/theme/tokens';
 
-/** A quiet dot instead of icons: enough to show where you are, nothing to look at. */
-function TabDot({ focused }: { focused: boolean }) {
-  return <View style={[styles.dot, focused && styles.dotFocused]} />;
-}
+/** Room for 22pt icons and a 12pt label; the default bar is sized for 10pt labels. */
+const TAB_BAR_HEIGHT = 60;
 
-/** Room for a 12pt label under the dot; the default bar is sized for 10pt labels. */
-const TAB_BAR_HEIGHT = 56;
+type IconName = keyof typeof Ionicons.glyphMap;
+const icon = (filled: IconName, outline: IconName) =>
+  function TabIcon({ focused, color }: { focused: boolean; color: ColorValue }) {
+    return <Ionicons name={focused ? filled : outline} size={22} color={color} />;
+  };
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
+  const { hydrated, preferences } = usePreferences();
+  if (hydrated && !preferences.onboarded) return <Redirect href="/welcome" />;
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.line, height: TAB_BAR_HEIGHT + insets.bottom },
+        tabBarStyle: {
+          backgroundColor: colors.surface,
+          borderTopColor: colors.line,
+          height: TAB_BAR_HEIGHT + insets.bottom,
+          paddingTop: 6,
+        },
         tabBarLabelStyle: { fontSize: 12, lineHeight: 16, fontWeight: '600' },
-        tabBarIcon: ({ focused }) => <TabDot focused={focused} />,
       }}>
-      <Tabs.Screen name="index" options={{ title: 'Today' }} />
-      <Tabs.Screen name="communications" options={{ title: 'Messages', tabBarAccessibilityLabel: 'Communications' }} />
-      <Tabs.Screen name="plan" options={{ title: 'Plan' }} />
-      <Tabs.Screen name="focus" options={{ title: 'Focus' }} />
+      <Tabs.Screen name="index" options={{ title: 'Today', tabBarIcon: icon('sunny', 'sunny-outline') }} />
+      <Tabs.Screen name="communications" options={{ title: 'Messages', tabBarIcon: icon('mail', 'mail-outline') }} />
+      <Tabs.Screen name="plan" options={{ title: 'Plan', tabBarIcon: icon('calendar', 'calendar-outline') }} />
+      <Tabs.Screen name="focus" options={{ title: 'Focus', tabBarIcon: icon('timer', 'timer-outline') }} />
     </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'transparent' },
-  dotFocused: { backgroundColor: colors.accent },
-});

@@ -26,6 +26,8 @@ export interface AttentionPreferences {
   notifyCommunicationWindows: boolean;
   notifyTimeBlocks: boolean;
   defaultReminderTime: string;
+  /** Has the user seen the welcome screen? */
+  onboarded: boolean;
 }
 
 export const defaultPreferences: AttentionPreferences = {
@@ -40,6 +42,7 @@ export const defaultPreferences: AttentionPreferences = {
   notifyCommunicationWindows: false,
   notifyTimeBlocks: true,
   defaultReminderTime: '09:00',
+  onboarded: false,
 };
 
 const isArray = (v: unknown): v is unknown[] => Array.isArray(v);

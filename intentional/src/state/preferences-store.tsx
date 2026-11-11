@@ -5,6 +5,8 @@ import { defaultPreferences, type AttentionPreferences } from '@/data/repositori
 import { useServices } from './services';
 
 interface PreferencesApi {
+  /** False until stored preferences have loaded. */
+  hydrated: boolean;
   preferences: AttentionPreferences;
   updatePreferences(patch: Partial<AttentionPreferences>): void;
 }
@@ -31,7 +33,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
     setPreferences((p) => ({ ...p, ...patch }));
   }, []);
 
-  const value = useMemo(() => ({ preferences, updatePreferences }), [preferences, updatePreferences]);
+  const value = useMemo(() => ({ hydrated, preferences, updatePreferences }), [hydrated, preferences, updatePreferences]);
   return <PreferencesContext.Provider value={value}>{children}</PreferencesContext.Provider>;
 }
 

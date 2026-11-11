@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 
@@ -7,7 +8,7 @@ import {
   windowStatus,
   type CommunicationItem,
 } from '@/domain/communications/communication';
-import { formatTimeOfDate, relativeDayLabel, toLocalDate } from '@/domain/dates';
+import { formatClock, formatTimeOfDate, relativeDayLabel, toLocalDate } from '@/domain/dates';
 import { useClock } from '@/state/clock';
 import { useCommunications } from '@/state/communications-store';
 import { usePreferences } from '@/state/preferences-store';
@@ -16,15 +17,17 @@ import { colors, space } from '@/theme/tokens';
 import { Button } from '@/ui/button';
 import { Card } from '@/ui/card';
 import { EmptyState } from '@/ui/empty-state';
-import { NotConnectedNote, SampleBadge } from '@/ui/sample-badge';
+import { SampleBadge } from '@/ui/sample-badge';
 import { Screen } from '@/ui/screen';
 import { Section } from '@/ui/section';
 import { Text } from '@/ui/text';
 
 export default function CommunicationsScreen() {
+  const router = useRouter();
   const now = useClock();
   const comms = useCommunications();
   const { preferences } = usePreferences();
+  const [showPreview, setShowPreview] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const [openDraftId, setOpenDraftId] = useState<string | null>(null);
 
@@ -33,51 +36,71 @@ export default function CommunicationsScreen() {
   const queue = buildQueue(comms.items, { handledIds: comms.handledIds, windowOpen, showAllOutsideWindow: showAll });
 
   const windowText = status.open
-    ? `Communication window open until ${formatTimeOfDate(status.closesAt)}.`
+    ? `Your message window is open until ${formatTimeOfDate(status.closesAt)}.`
     : status.nextOpensAt
-      ? `Next communication window: ${relativeDayLabel(toLocalDate(status.nextOpensAt), toLocalDate(now))} at ${formatTimeOfDate(status.nextOpensAt)}.`
-      : 'No communication windows set.';
+      ? `Next message window: ${relativeDayLabel(toLocalDate(status.nextOpensAt), toLocalDate(now))} at ${formatTimeOfDate(status.nextOpensAt)}.`
+      : 'No message windows set.';
+  const windowsSummary = preferences.communicationWindows.map((w) => formatClock(w.start)).join(' and ');
 
   return (
-    <Screen title="Messages" subtitle={queue.pendingCount === 0 ? 'All handled.' : `${queue.pendingCount} to look at`}>
+    <Screen title="Messages" subtitle={comms.isSample ? 'Coming when Gmail is connected' : queue.pendingCount === 0 ? 'All handled.' : `${queue.pendingCount} to look at`}>
       <Card style={!status.open ? styles.closedCard : undefined}>
         <Text>{windowText}</Text>
-        {!windowOpen && queue.heldCount > 0 ? (
-          <>
-            <Text variant="small" muted>
-              {queue.heldCount} non-urgent {queue.heldCount === 1 ? 'message is' : 'messages are'} being held until then.
-            </Text>
-            <Button tone="quiet" compact label={showAll ? 'Hold them again' : 'Show them anyway'} onPress={() => setShowAll((v) => !v)} style={styles.left} />
-          </>
-        ) : null}
+        <Text variant="small" muted>
+          {windowsSummary ? `Every day at ${windowsSummary}.` : 'Add windows to batch your messages into a few set times.'}
+        </Text>
+        <Button compact tone="quiet" label="Change message windows" style={styles.left} onPress={() => router.navigate('/focus')} />
       </Card>
 
-      {comms.integration.isMock ? (
-        <View style={styles.mockNote}>
-          <SampleBadge />
-          <NotConnectedNote service={comms.integration.displayName} />
-        </View>
+      {comms.isSample ? (
+        <Card>
+          <Text variant="heading">What this will do</Text>
+          <Text muted>
+            Once Gmail is connected, messages that need you are grouped and summarised here, and the rest wait for your next
+            window. Intentional will never send anything without your review.
+          </Text>
+          <Button
+            compact
+            tone="quiet"
+            label={showPreview ? 'Hide the preview' : 'Preview with sample messages'}
+            style={styles.left}
+            onPress={() => setShowPreview((v) => !v)}
+          />
+        </Card>
       ) : null}
 
-      {!comms.loaded ? null : queue.sections.length === 0 ? (
-        <EmptyState
-          title={queue.pendingCount === 0 ? 'Inbox handled' : 'Nothing urgent'}
-          body={queue.pendingCount === 0 ? 'Nothing needs you. Go do something else.' : 'The rest can wait for your next window.'}
-        />
-      ) : (
-        queue.sections.map((section) => (
-          <Section key={section.triage} title={TRIAGE_LABELS[section.triage].title}>
-            {section.items.map((item) => (
-              <MessageCard
-                key={item.id}
-                item={item}
-                today={toLocalDate(now)}
-                draftOpen={openDraftId === item.id}
-                onToggleDraft={() => setOpenDraftId((id) => (id === item.id ? null : item.id))}
-              />
-            ))}
-          </Section>
-        ))
+      {comms.isSample && !showPreview ? null : (
+        <>
+          {comms.isSample ? <SampleBadge label="Sample messages, not your inbox" /> : null}
+          {!windowOpen && queue.heldCount > 0 ? (
+            <View style={styles.held}>
+              <Text variant="small" muted>
+                {queue.heldCount} non-urgent {queue.heldCount === 1 ? 'message is' : 'messages are'} being held until your next window.
+              </Text>
+              <Button compact tone="quiet" label={showAll ? 'Hold them again' : 'Show them anyway'} onPress={() => setShowAll((v) => !v)} />
+            </View>
+          ) : null}
+          {!comms.loaded ? null : queue.sections.length === 0 ? (
+            <EmptyState
+              title={queue.pendingCount === 0 ? 'Inbox handled' : 'Nothing urgent'}
+              body={queue.pendingCount === 0 ? 'Nothing needs you. Go do something else.' : 'The rest can wait for your next window.'}
+            />
+          ) : (
+            queue.sections.map((section) => (
+              <Section key={section.triage} title={TRIAGE_LABELS[section.triage].title}>
+                {section.items.map((item) => (
+                  <MessageCard
+                    key={item.id}
+                    item={item}
+                    today={toLocalDate(now)}
+                    draftOpen={openDraftId === item.id}
+                    onToggleDraft={() => setOpenDraftId((id) => (id === item.id ? null : item.id))}
+                  />
+                ))}
+              </Section>
+            ))
+          )}
+        </>
       )}
     </Screen>
   );
@@ -158,7 +181,7 @@ function MessageCard({
 
 const styles = StyleSheet.create({
   closedCard: { backgroundColor: colors.surfaceSunken },
-  mockNote: { gap: space.xs },
+  held: { gap: space.xs },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   flex: { flex: 1 },
   draft: { backgroundColor: colors.surfaceSunken, borderRadius: 10, padding: space.md, gap: space.xs },

@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -41,6 +42,7 @@ export function CaptureBar() {
       accessibilityLabel="Capture a thought or ask the assistant"
       onPress={() => router.push('/command')}
       style={({ pressed }) => [styles.capture, pressed && { opacity: 0.8 }]}>
+      <Ionicons name="sparkles-outline" size={18} color={colors.accent} />
       <Text muted>Capture or ask…</Text>
     </Pressable>
   );
@@ -51,8 +53,10 @@ const styles = StyleSheet.create({
   content: { padding: space.xl, paddingTop: space.lg, gap: space.xl, paddingBottom: space.xxxl },
   header: { gap: space.xs },
   capture: {
-    minHeight: MIN_TOUCH,
-    justifyContent: 'center',
+    minHeight: MIN_TOUCH + 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
     paddingHorizontal: space.lg,
     borderRadius: radius.pill,
     backgroundColor: colors.surfaceSunken,

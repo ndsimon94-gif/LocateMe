@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { windowStatus, needsReplyCount } from '@/domain/communications/communication';
+import { windowStatus } from '@/domain/communications/communication';
 import { addDays, formatTimeOfDate, greetingFor, longDate, toLocalDate } from '@/domain/dates';
 import { remainingMs } from '@/domain/focus/focus-timer';
 import { priorityCandidates, todaysPriorities } from '@/domain/tasks/priorities';
@@ -21,7 +21,6 @@ import { Card } from '@/ui/card';
 import { EmptyState } from '@/ui/empty-state';
 import { CalendarSource } from '@/ui/calendar-source';
 import { EventRow } from '@/ui/event-row';
-import { SampleBadge } from '@/ui/sample-badge';
 import { Screen } from '@/ui/screen';
 import { Section } from '@/ui/section';
 import { TaskRow } from '@/ui/task-row';
@@ -43,7 +42,7 @@ export default function TodayScreen() {
   const candidates = priorities.length < MAX_DAILY_PRIORITIES ? priorityCandidates(tasks, today) : [];
   const upcoming = events.filter((e) => new Date(e.end) > now);
   const window = windowStatus(preferences.communicationWindows, now);
-  const replies = needsReplyCount(comms.items, comms.handledIds);
+  const replies = comms.needsReplyCount;
   const next = nextSuggestedAction({
     now,
     events,
@@ -119,16 +118,20 @@ export default function TodayScreen() {
         )}
       </Section>
 
-      <Section title="Messages" trailing={comms.integration.isMock ? <SampleBadge /> : null}>
+      <Section title="Messages">
         <Card>
-          <Text>
-            {replies === 0 ? 'Nothing is waiting on you.' : `${replies} ${replies === 1 ? 'message needs' : 'messages need'} a reply.`}
-          </Text>
+          {comms.isSample ? (
+            <Text>Gmail isn&apos;t connected yet, so there&apos;s nothing to check here.</Text>
+          ) : (
+            <Text>
+              {replies === 0 ? 'Nothing is waiting on you.' : `${replies} ${replies === 1 ? 'message needs' : 'messages need'} a reply.`}
+            </Text>
+          )}
           <Text variant="small" muted>
             {window.open
-              ? 'Your communication window is open now.'
+              ? 'Your message window is open now.'
               : window.nextOpensAt
-                ? `Next window ${toLocalDate(window.nextOpensAt) === today ? 'today' : 'tomorrow'} at ${formatTimeOfDate(window.nextOpensAt)}.`
+                ? `Next message window ${toLocalDate(window.nextOpensAt) === today ? 'today' : 'tomorrow'} at ${formatTimeOfDate(window.nextOpensAt)}.`
                 : ''}
           </Text>
           {replies > 0 ? <Button tone="secondary" compact label="Open queue" onPress={() => router.navigate('/communications')} style={styles.left} /> : null}

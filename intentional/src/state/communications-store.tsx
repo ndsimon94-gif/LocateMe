@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
-import type { CommunicationItem } from '@/domain/communications/communication';
+import { needsReplyCount as countNeedsReply, type CommunicationItem } from '@/domain/communications/communication';
 import type { IntegrationInfo } from '@/integrations/types';
 
 import { useServices } from './services';
@@ -10,6 +10,10 @@ interface CommunicationsApi {
   items: CommunicationItem[];
   handledIds: ReadonlySet<string>;
   integration: IntegrationInfo;
+  /** True while the queue is sample data (mail not connected). */
+  isSample: boolean;
+  /** Real messages waiting for a reply; always 0 for sample data, so nothing acts on fake messages. */
+  needsReplyCount: number;
   markHandled(id: string): void;
   undoHandled(id: string): void;
 }
@@ -39,10 +43,20 @@ export function CommunicationsProvider({ children }: { children: ReactNode }) {
   const markHandled = useCallback((id: string) => setHandled((h) => (h.includes(id) ? h : [...h, id])), []);
   const undoHandled = useCallback((id: string) => setHandled((h) => h.filter((x) => x !== id)), []);
 
-  const value = useMemo(
-    () => ({ loaded, items, handledIds: new Set(handled), integration: mail.info(), markHandled, undoHandled }),
-    [loaded, items, handled, mail, markHandled, undoHandled],
-  );
+  const value = useMemo(() => {
+    const integration = mail.info();
+    const handledIds = new Set(handled);
+    return {
+      loaded,
+      items,
+      handledIds,
+      integration,
+      isSample: integration.isMock,
+      needsReplyCount: integration.isMock ? 0 : countNeedsReply(items, handledIds),
+      markHandled,
+      undoHandled,
+    };
+  }, [loaded, items, handled, mail, markHandled, undoHandled]);
   return <CommunicationsContext.Provider value={value}>{children}</CommunicationsContext.Provider>;
 }
 

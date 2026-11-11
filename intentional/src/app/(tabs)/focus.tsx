@@ -148,6 +148,7 @@ function Insights({ now }: { now: Date }) {
             </Text>
           </>
         )}
+        {summary.sessionCount === 0 ? null : (
         <View style={styles.bars} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
           {summary.minutesByDay.map((d) => (
             <View key={d.date} style={styles.barCol}>
@@ -160,6 +161,7 @@ function Insights({ now }: { now: Date }) {
             </View>
           ))}
         </View>
+        )}
         <Text variant="small" muted>
           Insights stay on this device. There are no streaks or scores here — rest days count too.
         </Text>
