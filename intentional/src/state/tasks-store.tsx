@@ -15,6 +15,8 @@ interface TasksApi {
   updateTask(id: string, draft: TaskDraft): Result<Task>;
   setCompleted(id: string, completed: boolean): void;
   deleteTask(id: string): void;
+  /** Restores a task snapshot exactly (undo). */
+  restoreTask(task: Task): void;
 }
 
 const TasksContext = createContext<TasksApi | null>(null);
@@ -65,10 +67,21 @@ export function TasksProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setCompleted = useCallback((id: string, completed: boolean) => {
-    dispatch({ type: 'setCompleted', id, completed, now: new Date() });
+    const now = new Date();
+    tasksRef.current = tasksRef.current.map((t) =>
+      t.id === id ? { ...t, completedAt: completed ? (t.completedAt ?? now.toISOString()) : null, updatedAt: now.toISOString() } : t,
+    );
+    dispatch({ type: 'setCompleted', id, completed, now });
   }, []);
 
-  const deleteTask = useCallback((id: string) => dispatch({ type: 'remove', id }), []);
+  const deleteTask = useCallback((id: string) => {
+    tasksRef.current = tasksRef.current.filter((t) => t.id !== id);
+    dispatch({ type: 'remove', id });
+  }, []);
+  const restoreTask = useCallback((task: Task) => {
+    tasksRef.current = tasksRef.current.some((t) => t.id === task.id) ? tasksRef.current.map((t) => (t.id === task.id ? task : t)) : [...tasksRef.current, task];
+    dispatch({ type: 'restore', task });
+  }, []);
 
   const value = useMemo<TasksApi>(
     () => ({
@@ -79,8 +92,9 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       updateTask,
       setCompleted,
       deleteTask,
+      restoreTask,
     }),
-    [state, addTask, updateTask, setCompleted, deleteTask],
+    [state, addTask, updateTask, setCompleted, deleteTask, restoreTask],
   );
 
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>;

@@ -35,6 +35,7 @@ export class BackendError extends Error {
   constructor(
     public readonly code: string,
     public readonly status: number | null,
+    public readonly detail: string | null = null,
   ) {
     super(code);
     this.name = 'BackendError';
@@ -48,16 +49,19 @@ export async function callFunction<T>(name: string, body: Record<string, unknown
   if (error) {
     let code = 'network_error';
     let status: number | null = null;
+    let detail: string | null = null;
     const response = (error as { context?: unknown }).context;
     if (response instanceof Response) {
       status = response.status;
       try {
-        code = (await response.json())?.error ?? `http_${status}`;
+        const body = await response.json();
+        code = body?.error ?? `http_${status}`;
+        detail = typeof body?.detail === 'string' ? body.detail : null;
       } catch {
         code = `http_${status}`;
       }
     }
-    throw new BackendError(code, status);
+    throw new BackendError(code, status, detail);
   }
   return data as T;
 }

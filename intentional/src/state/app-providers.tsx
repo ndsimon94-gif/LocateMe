@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 
+import { AssistantProvider } from './assistant-store';
 import { AuthProvider } from './auth-store';
+import { ChangesProvider } from './changes-store';
 import { CommunicationsProvider } from './communications-store';
 import { ConnectionsProvider } from './connections-store';
 import { FocusProvider } from './focus-store';
@@ -20,7 +22,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
               <PlansProvider>
                 <CommunicationsProvider>
                   <FocusProvider>
-                    <NotificationsProvider>{children}</NotificationsProvider>
+                    <ChangesProvider>
+                      <NotificationsProvider>
+                        <AssistantProvider>{children}</AssistantProvider>
+                      </NotificationsProvider>
+                    </ChangesProvider>
                   </FocusProvider>
                 </CommunicationsProvider>
               </PlansProvider>

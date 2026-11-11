@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { addDays } from '@/domain/dates';
-import { buildPlan, planDays, type AppliedPlan, type PlanProposal } from '@/domain/planning/plan';
+import { buildPlan, planDays, type PlanProposal } from '@/domain/planning/plan';
 import type { PlanRequest } from '@/domain/planning/plan-request';
 import type { TimeBlock } from '@/domain/planning/time-block';
 import { newId } from '@/domain/tasks/task';
@@ -10,38 +10,31 @@ import { usePreferences } from './preferences-store';
 import { useServices } from './services';
 import { useTasks } from './tasks-store';
 
-interface ApplyResult {
-  applied: number;
-  failures: string[];
-}
-
 interface PlansApi {
   blocks: TimeBlock[];
-  appliedPlans: AppliedPlan[];
-  /** The proposal awaiting review, if any. */
+  /** The plan proposal awaiting review (on-device assistant path), if any. */
   draft: PlanProposal | null;
   propose(request: PlanRequest): Promise<PlanProposal>;
   clearDraft(): void;
-  apply(proposal: PlanProposal, selectedIds: ReadonlySet<string>): ApplyResult;
-  undo(planId: string): void;
-  removeBlock(id: string): void;
+  /** Adds or replaces blocks by id. */
+  upsertBlocks(blocks: TimeBlock[]): void;
+  removeBlocks(ids: string[]): void;
 }
 
 const PlansContext = createContext<PlansApi | null>(null);
 
+/** Set-aside time and plan drafts. Applying and undoing changes lives in the changes store. */
 export function PlansProvider({ children }: { children: ReactNode }) {
   const { repositories, calendar } = useServices();
-  const { tasks, getTask, addTask, updateTask, deleteTask } = useTasks();
-  const { preferences, updatePreferences } = usePreferences();
+  const { tasks } = useTasks();
+  const { preferences } = usePreferences();
   const [blocks, setBlocks] = useState<TimeBlock[]>([]);
-  const [appliedPlans, setAppliedPlans] = useState<AppliedPlan[]>([]);
   const [draft, setDraft] = useState<PlanProposal | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    Promise.all([repositories.timeBlocks.load(), repositories.appliedPlans.load()]).then(([b, p]) => {
+    void repositories.timeBlocks.load().then((b) => {
       setBlocks(b);
-      setAppliedPlans(p);
       setHydrated(true);
     });
   }, [repositories]);
@@ -49,10 +42,6 @@ export function PlansProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (hydrated) void repositories.timeBlocks.save(blocks);
   }, [hydrated, blocks, repositories]);
-  useEffect(() => {
-    // Keep the undo history short.
-    if (hydrated) void repositories.appliedPlans.save(appliedPlans.slice(-10));
-  }, [hydrated, appliedPlans, repositories]);
 
   const propose = useCallback(
     async (request: PlanRequest) => {
@@ -75,83 +64,21 @@ export function PlansProvider({ children }: { children: ReactNode }) {
     [calendar, tasks, blocks, preferences.communicationWindows, preferences.planningHours],
   );
 
-  const apply = useCallback(
-    (proposal: PlanProposal, selectedIds: ReadonlySet<string>): ApplyResult => {
-      const record: AppliedPlan = {
-        id: proposal.id,
-        appliedAt: new Date().toISOString(),
-        summary: proposal.summary,
-        createdTaskIds: [],
-        createdBlockIds: [],
-        prioritizedTaskIds: [],
-        previousWindows: null,
-        undone: false,
-      };
-      const failures: string[] = [];
-      const newBlocks: TimeBlock[] = [];
-      for (const op of proposal.operations) {
-        if (!selectedIds.has(op.id)) continue;
-        switch (op.op) {
-          case 'set_communication_windows':
-            record.previousWindows = preferences.communicationWindows;
-            updatePreferences({ communicationWindows: op.windows, notifyCommunicationWindows: true });
-            break;
-          case 'add_block': {
-            const id = newId();
-            newBlocks.push({ id, ...op.block, planId: proposal.id, createdAt: record.appliedAt });
-            record.createdBlockIds.push(id);
-            break;
-          }
-          case 'set_priority': {
-            const task = getTask(op.taskId);
-            if (!task) {
-              failures.push(`"${op.taskTitle}" no longer exists.`);
-              break;
-            }
-            const r = updateTask(task.id, { title: task.title, isPriority: true, dueDate: op.date });
-            if (r.ok) record.prioritizedTaskIds.push(task.id);
-            else failures.push(`${op.taskTitle}: ${r.error}`);
-            break;
-          }
-          case 'add_reminder': {
-            const r = addTask({ title: op.title, kind: 'reminder', dueDate: op.date, dueTime: op.time, source: 'assistant' });
-            if (r.ok) record.createdTaskIds.push(r.value.id);
-            else failures.push(`${op.title}: ${r.error}`);
-            break;
-          }
-        }
-      }
-      if (newBlocks.length) setBlocks((b) => [...b, ...newBlocks]);
-      setAppliedPlans((p) => [...p, record]);
-      setDraft(null);
-      const applied = record.createdBlockIds.length + record.createdTaskIds.length + record.prioritizedTaskIds.length + (record.previousWindows ? 1 : 0);
-      return { applied, failures };
-    },
-    [preferences.communicationWindows, updatePreferences, getTask, updateTask, addTask],
-  );
-
-  const undo = useCallback(
-    (planId: string) => {
-      const record = appliedPlans.find((p) => p.id === planId);
-      if (!record || record.undone) return;
-      record.createdTaskIds.forEach(deleteTask);
-      for (const id of record.prioritizedTaskIds) {
-        const t = getTask(id);
-        if (t) updateTask(id, { title: t.title, isPriority: false });
-      }
-      if (record.previousWindows) updatePreferences({ communicationWindows: record.previousWindows });
-      setBlocks((b) => b.filter((x) => x.planId !== planId));
-      setAppliedPlans((p) => p.map((x) => (x.id === planId ? { ...x, undone: true } : x)));
-    },
-    [appliedPlans, deleteTask, getTask, updateTask, updatePreferences],
-  );
-
-  const removeBlock = useCallback((id: string) => setBlocks((b) => b.filter((x) => x.id !== id)), []);
+  const upsertBlocks = useCallback((incoming: TimeBlock[]) => {
+    setBlocks((current) => {
+      const ids = new Set(incoming.map((b) => b.id));
+      return [...current.filter((b) => !ids.has(b.id)), ...incoming];
+    });
+  }, []);
+  const removeBlocks = useCallback((ids: string[]) => {
+    const set = new Set(ids);
+    setBlocks((current) => current.filter((b) => !set.has(b.id)));
+  }, []);
   const clearDraft = useCallback(() => setDraft(null), []);
 
   const value = useMemo(
-    () => ({ blocks, appliedPlans, draft, propose, clearDraft, apply, undo, removeBlock }),
-    [blocks, appliedPlans, draft, propose, clearDraft, apply, undo, removeBlock],
+    () => ({ blocks, draft, propose, clearDraft, upsertBlocks, removeBlocks }),
+    [blocks, draft, propose, clearDraft, upsertBlocks, removeBlocks],
   );
   return <PlansContext.Provider value={value}>{children}</PlansContext.Provider>;
 }

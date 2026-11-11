@@ -7,7 +7,9 @@ import { remainingMs } from '@/domain/focus/focus-timer';
 import { priorityCandidates, todaysPriorities } from '@/domain/tasks/priorities';
 import { blockToEvent } from '@/domain/planning/time-block';
 import { MAX_DAILY_PRIORITIES } from '@/domain/tasks/task';
+import { CHECKIN_PROMPTS, dueCheckin, type Checkin } from '@/domain/today/checkin';
 import { nextSuggestedAction } from '@/domain/today/next-action';
+import { useAssistant } from '@/state/assistant-store';
 import { useCalendarEvents } from '@/state/calendar';
 import { useClock } from '@/state/clock';
 import { useCommunications } from '@/state/communications-store';
@@ -36,7 +38,8 @@ export default function TodayScreen() {
   const events = [...calendarEvents, ...blocks.filter((b) => b.date === today).map(blockToEvent)].sort((a, b) => (a.start < b.start ? -1 : 1));
   const comms = useCommunications();
   const focus = useFocus();
-  const { preferences } = usePreferences();
+  const { preferences, updatePreferences } = usePreferences();
+  const { mode } = useAssistant();
 
   const priorities = todaysPriorities(tasks, today);
   const candidates = priorities.length < MAX_DAILY_PRIORITIES ? priorityCandidates(tasks, today) : [];
@@ -68,8 +71,24 @@ export default function TodayScreen() {
     }
   };
 
+  const checkin = mode === 'claude' ? dueCheckin(now, preferences.checkins, preferences.windDownTime) : null;
+  const startCheckin = (which: Checkin) => {
+    updatePreferences({ checkins: { ...preferences.checkins, [which]: today } });
+    router.push({ pathname: '/command', params: { prompt: CHECKIN_PROMPTS[which].prompt } });
+  };
+
   return (
     <Screen title={greetingFor(now)} subtitle={longDate(today)}>
+      {checkin ? (
+        <Card style={styles.checkin}>
+          <Text variant="heading">{CHECKIN_PROMPTS[checkin].title}</Text>
+          <Text muted>{CHECKIN_PROMPTS[checkin].body}</Text>
+          <View style={styles.checkinActions}>
+            <Button compact label="Start" onPress={() => startCheckin(checkin)} />
+            <Button compact tone="quiet" label="Not today" onPress={() => updatePreferences({ checkins: { ...preferences.checkins, [checkin]: today } })} />
+          </View>
+        </Card>
+      ) : null}
       <Card style={styles.next} accessibilityLabel="Next suggested action">
         <Text variant="label" style={{ color: colors.accent }}>
           Next
@@ -148,4 +167,6 @@ const styles = StyleSheet.create({
   candidate: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   candidateTitle: { flex: 1 },
   left: { alignSelf: 'flex-start' },
+  checkin: { backgroundColor: colors.accentSoft, borderColor: colors.accentSoft },
+  checkinActions: { flexDirection: 'row', gap: space.sm, marginTop: space.xs },
 });

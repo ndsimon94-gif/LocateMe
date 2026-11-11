@@ -10,7 +10,7 @@ import { Text } from './text';
 
 /** A calendar event, or time set aside in Intentional (origin 'intentional'). */
 export function EventRow({ event, past, removable }: { event: CalendarEvent; past?: boolean; removable?: boolean }) {
-  const { removeBlock } = usePlans();
+  const { removeBlocks } = usePlans();
   const start = new Date(event.start);
   const end = new Date(event.end);
   const isBlock = event.origin === 'intentional';
@@ -39,7 +39,7 @@ export function EventRow({ event, past, removable }: { event: CalendarEvent; pas
         ) : null}
       </View>
       {isBlock && removable ? (
-        <Button compact tone="quiet" label="Remove" accessibilityHint={`Removes ${event.title} from your plan`} onPress={() => removeBlock(event.id.replace(/^block:/, ''))} />
+        <Button compact tone="quiet" label="Remove" accessibilityHint={`Removes ${event.title} from your plan`} onPress={() => removeBlocks([event.id.replace(/^block:/, '')])} />
       ) : null}
     </View>
   );

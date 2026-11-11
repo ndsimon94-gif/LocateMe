@@ -5,7 +5,12 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { dayHeading, formatClock, toLocalDate } from '@/domain/dates';
 import type { PlanOperation } from '@/domain/planning/plan';
 import { useNotifications } from '@/state/notifications-store';
+import { planOperationToChange, stageChanges } from '@/domain/assistant/changeset';
+import { newId } from '@/domain/tasks/task';
+import { useChanges } from '@/state/changes-store';
 import { usePlans } from '@/state/plans-store';
+import { usePreferences } from '@/state/preferences-store';
+import { useTasks } from '@/state/tasks-store';
 import { useServices } from '@/state/services';
 import { colors, MIN_TOUCH, radius, space } from '@/theme/tokens';
 import { Button } from '@/ui/button';
@@ -24,7 +29,10 @@ const GROUPS: { op: PlanOperation['op']; title: string }[] = [
 
 export default function PlanReviewScreen() {
   const router = useRouter();
-  const { draft, apply, clearDraft, undo } = usePlans();
+  const { draft, clearDraft, blocks } = usePlans();
+  const { apply, undo } = useChanges();
+  const { tasks } = useTasks();
+  const { preferences } = usePreferences();
   const { calendar } = useServices();
   const notifications = useNotifications();
   const [selected, setSelected] = useState<Set<string>>(() => new Set(draft?.operations.map((o) => o.id)));
@@ -122,8 +130,15 @@ export default function PlanReviewScreen() {
         label={count === 0 ? 'Nothing selected' : `Apply ${count} ${count === 1 ? 'change' : 'changes'}`}
         disabled={count === 0}
         onPress={() => {
-          const r = apply(draft, selected);
-          setResult({ planId: draft.id, ...r });
+          const now = new Date();
+          const { staged, failures } = stageChanges(
+            draft.operations.filter((o) => selected.has(o.id)).map(planOperationToChange),
+            { now, today: toLocalDate(now), tasks, blocks, windows: preferences.communicationWindows },
+            () => newId(),
+          );
+          const r = apply(staged, draft.summary);
+          clearDraft();
+          setResult({ planId: r.record.id, applied: staged.length - r.failures.length, failures: [...failures, ...r.failures] });
           void notifications.requestIfNeeded();
         }}
       />

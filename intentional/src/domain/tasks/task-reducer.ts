@@ -5,7 +5,9 @@ export type TaskAction =
   | { type: 'add'; task: Task }
   | { type: 'replace'; task: Task }
   | { type: 'setCompleted'; id: string; completed: boolean; now: Date }
-  | { type: 'remove'; id: string };
+  | { type: 'remove'; id: string }
+  /** Puts a task back exactly as it was (used by undo). */
+  | { type: 'restore'; task: Task };
 
 export interface TaskState {
   hydrated: boolean;
@@ -42,5 +44,9 @@ export function taskReducer(state: TaskState, action: TaskAction): TaskState {
       };
     case 'remove':
       return { ...state, tasks: state.tasks.filter((t) => t.id !== action.id) };
+    case 'restore':
+      return state.tasks.some((t) => t.id === action.task.id)
+        ? { ...state, tasks: state.tasks.map((t) => (t.id === action.task.id ? action.task : t)) }
+        : { ...state, tasks: [...state.tasks, action.task] };
   }
 }

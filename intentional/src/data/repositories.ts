@@ -1,7 +1,8 @@
 import type { CommunicationWindow } from '@/domain/communications/communication';
 import type { FocusSessionRecord } from '@/domain/focus/focus-history';
 import type { FocusTimerState } from '@/domain/focus/focus-timer';
-import type { AppliedPlan } from '@/domain/planning/plan';
+import type { Conversation } from '@/ai/agent/conversation';
+import type { AppliedChangeset } from '@/domain/assistant/changeset';
 import type { TimeBlock } from '@/domain/planning/time-block';
 import type { Task } from '@/domain/tasks/task';
 
@@ -28,6 +29,8 @@ export interface AttentionPreferences {
   defaultReminderTime: string;
   /** Has the user seen the welcome screen? */
   onboarded: boolean;
+  /** Last day each check-in was started, so it's offered at most once a day. */
+  checkins: { morning: string | null; evening: string | null };
 }
 
 export const defaultPreferences: AttentionPreferences = {
@@ -43,6 +46,7 @@ export const defaultPreferences: AttentionPreferences = {
   notifyTimeBlocks: true,
   defaultReminderTime: '09:00',
   onboarded: false,
+  checkins: { morning: null, evening: null },
 };
 
 const isArray = (v: unknown): v is unknown[] => Array.isArray(v);
@@ -58,7 +62,8 @@ export interface Repositories {
   preferences: StoredDocument<AttentionPreferences>;
   handledCommunications: StoredDocument<string[]>;
   timeBlocks: StoredDocument<TimeBlock[]>;
-  appliedPlans: StoredDocument<AppliedPlan[]>;
+  appliedChangesets: StoredDocument<AppliedChangeset[]>;
+  conversation: StoredDocument<Conversation | null>;
 }
 
 export function createLocalRepositories(store: KeyValueStore): Repositories {
@@ -87,6 +92,7 @@ export function createLocalRepositories(store: KeyValueStore): Repositories {
       (v): v is string[] => isArray(v) && v.every((x) => typeof x === 'string'),
     ),
     timeBlocks: createDocument(store, 'intentional.timeBlocks', 1, () => [], (v): v is TimeBlock[] => isArray(v) && v.every((b) => isObject(b) && typeof b.id === 'string')),
-    appliedPlans: createDocument(store, 'intentional.appliedPlans', 1, () => [], (v): v is AppliedPlan[] => isArray(v)),
+    conversation: createDocument(store, 'intentional.conversation', 1, () => null, (v): v is Conversation | null => v === null || (isObject(v) && isArray(v.apiMessages) && isArray(v.items))),
+    appliedChangesets: createDocument(store, 'intentional.appliedChangesets', 1, () => [], (v): v is AppliedChangeset[] => isArray(v)),
   };
 }

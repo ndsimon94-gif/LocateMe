@@ -1,209 +1,234 @@
-import { useRouter } from 'expo-router';
-import { useRef, useState } from 'react';
-import { Pressable, StyleSheet, View, type TextInput } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import type { AssistantResponse, ProposedAction } from '@/ai/assistant';
-import { addDays, toLocalDate } from '@/domain/dates';
-import { todaysPriorities } from '@/domain/tasks/priorities';
-import { isOpen } from '@/domain/tasks/task';
-import { useAuth } from '@/state/auth-store';
-import { useCalendarEvents } from '@/state/calendar';
-import { useCommunications } from '@/state/communications-store';
-import { useConnections } from '@/state/connections-store';
+import type { ProposedAction } from '@/ai/assistant';
+import type { ChatItem } from '@/ai/agent/conversation';
+import { useAssistant } from '@/state/assistant-store';
 import { executeAction } from '@/state/execute-action';
 import { useFocus } from '@/state/focus-store';
 import { useNotifications } from '@/state/notifications-store';
 import { usePlans } from '@/state/plans-store';
-import { useServices } from '@/state/services';
 import { useTasks } from '@/state/tasks-store';
-import { colors, space } from '@/theme/tokens';
+import { colors, MIN_TOUCH, radius, space, type as typeScale } from '@/theme/tokens';
 import { Button } from '@/ui/button';
-import { Card } from '@/ui/card';
-import { ModalScreen } from '@/ui/modal-screen';
+import { ChangesCard } from '@/ui/changes-card';
 import { SampleBadge } from '@/ui/sample-badge';
 import { Text } from '@/ui/text';
-import { TextField } from '@/ui/text-field';
 
-const EXAMPLES = [
-  'I have a busy week. Organize my priorities, find time for exercise, remind me of anything important, and give me two windows each day to respond to messages.',
-  'Remind me to call the dentist tomorrow at 10am',
-  'Focus for 45 minutes on the proposal',
-  "What's on today?",
-];
+function starters(now: Date): string[] {
+  const h = now.getHours();
+  const time = h < 12 ? 'Plan my day' : h >= 17 ? 'Wrap up today' : 'What should I focus on now?';
+  return [
+    time,
+    'Rework the rest of my week',
+    'I have a busy week. Organize my priorities, find time for exercise, remind me of anything important, and give me two windows each day to respond to messages.',
+    'Remind me to call the dentist tomorrow at 10am',
+  ];
+}
 
-export default function CommandScreen() {
+export default function AssistantScreen() {
   const router = useRouter();
-  const inputRef = useRef<TextInput>(null);
-  const { assistant } = useServices();
-  const { session } = useAuth();
-  const assistantIsRemote = Boolean(session);
-  const { tasks, addTask } = useTasks();
-  const focus = useFocus();
-  const comms = useCommunications();
-  const plans = usePlans();
-  const { google } = useConnections();
-  const notifications = useNotifications();
-  const now = new Date();
-  const today = toLocalDate(now);
-  const { events } = useCalendarEvents(today, addDays(today, 1));
-
+  const params = useLocalSearchParams<{ prompt?: string }>();
+  const assistant = useAssistant();
   const [input, setInput] = useState('');
-  const [response, setResponse] = useState<AssistantResponse | null>(null);
-  const [outcome, setOutcome] = useState<{ ok: boolean; message: string } | null>(null);
-  const [busy, setBusy] = useState(false);
+  const scroll = useRef<ScrollView>(null);
+  const sentPrompt = useRef(false);
 
-  const ask = async (text = input) => {
-    if (!text.trim() || busy) return;
-    setBusy(true);
-    setOutcome(null);
-    try {
-      const r = await assistant.respond(text, {
-        now: new Date(),
-        todayEventTitles: events.map((e) => e.title),
-        priorityTitles: todaysPriorities(tasks, today).map((t) => t.title),
-        openTaskCount: tasks.filter(isOpen).length,
-        needsReplyCount: comms.needsReplyCount,
-        connectedIntegrations: new Set(google === 'connected' ? (['google_calendar'] as const) : []),
-      });
-      setResponse(r);
-    } finally {
-      setBusy(false);
+  // Opened with a prompt (e.g. "Plan my day" from Today): send it once.
+  useEffect(() => {
+    if (params.prompt && !sentPrompt.current) {
+      sentPrompt.current = true;
+      void assistant.send(params.prompt);
     }
-  };
+  }, [params.prompt, assistant]);
 
-  const run = (action: ProposedAction) => {
-    const result = executeAction(action, {
-      addTask: (draft) => {
-        const r = addTask(draft);
-        if (r.ok && r.value.kind === 'reminder') void notifications.requestIfNeeded();
-        return r;
-      },
-      startFocus: (intention, minutes) => {
-        focus.start(intention, minutes);
-        void notifications.requestIfNeeded();
-      },
-      reviewPlan: (request) => {
-        setBusy(true);
-        void plans
-          .propose(request)
-          .then(() => router.replace('/plan-review'))
-          .finally(() => setBusy(false));
-      },
-      navigate: (to, params) => {
-        router.dismissAll();
-        router.navigate(params ? { pathname: to, params } : to);
-      },
-    });
-    if (action.kind === 'navigate' || action.kind === 'start_focus' || action.kind === 'propose_plan') return;
-    setOutcome(result);
-    if (result.ok) {
-      setInput('');
-      setResponse(null);
-      inputRef.current?.focus();
-    }
+  const submit = (text = input) => {
+    if (!text.trim() || assistant.busy) return;
+    setInput('');
+    void assistant.send(text);
   };
 
   return (
-    <ModalScreen title="Capture or ask">
-      <TextField
-        ref={inputRef}
-        label="Thought or request"
-        value={input}
-        onChangeText={(t) => {
-          setInput(t);
-          setResponse(null);
-        }}
-        placeholder="e.g. remind me to water the plants tonight"
-        autoFocus
-        returnKeyType="send"
-        onSubmitEditing={() => ask()}
-        blurOnSubmit={false}
-      />
-      <Button label={busy ? 'Thinking…' : 'Continue'} onPress={() => ask()} disabled={!input.trim() || busy} />
-
-      {outcome ? (
-        <Text style={{ color: outcome.ok ? colors.accent : colors.danger }} accessibilityRole="alert">
-          {outcome.message}
-        </Text>
-      ) : null}
-
-      {response ? (
-        <Card>
-          <View style={styles.row}>
-            <Text variant="label" muted style={styles.flex}>
-              Assistant
-            </Text>
-            {response.provider === 'mock' ? <SampleBadge label="On-device assistant" /> : <Text variant="small" muted>Claude</Text>}
+    <SafeAreaView style={styles.safe} edges={Platform.OS === 'ios' ? ['bottom', 'left', 'right'] : undefined}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}>
+        <View style={styles.header}>
+          <Text variant="title" accessibilityRole="header">
+            Assistant
+          </Text>
+          <View style={styles.headerActions}>
+            {assistant.items.length ? <Button compact tone="quiet" label="New" onPress={assistant.newChat} /> : null}
+            <Button compact tone="quiet" label="Close" onPress={() => router.back()} />
           </View>
-          <Text>{response.message}</Text>
-          {response.actions.map((a, i) => (
-            <ActionView key={i} action={a} onRun={run} />
-          ))}
-        </Card>
-      ) : null}
-
-      {!response && !input ? (
-        <View style={styles.examples}>
-          <Text variant="label" muted>
-            Try
-          </Text>
-          {EXAMPLES.map((e) => (
-            <Pressable
-              key={e}
-              accessibilityRole="button"
-              onPress={() => {
-                setInput(e);
-                void ask(e);
-              }}
-              style={({ pressed }) => [styles.example, pressed && { opacity: 0.7 }]}>
-              <Text variant="small" style={{ color: colors.accent }}>
-                {e}
-              </Text>
-            </Pressable>
-          ))}
-          <Text variant="small" muted>
-            {assistantIsRemote
-              ? 'Sent to Claude with today’s event titles and priorities. Claude only suggests; you confirm.'
-              : 'Runs entirely on this device. Nothing you type here is sent anywhere.'}
-          </Text>
         </View>
-      ) : null}
-    </ModalScreen>
+
+        <ScrollView
+          ref={scroll}
+          style={styles.flex}
+          contentContainerStyle={styles.list}
+          keyboardShouldPersistTaps="handled"
+          onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: false })}>
+          {assistant.items.length === 0 ? <Intro mode={assistant.mode} onPick={submit} /> : null}
+          {assistant.items.map((item) => (
+            <Item key={item.id} item={item} />
+          ))}
+          {assistant.busy ? (
+            <Text muted accessibilityLiveRegion="polite">
+              Thinking…
+            </Text>
+          ) : null}
+        </ScrollView>
+
+        <View style={styles.composer}>
+          <TextInput
+            value={input}
+            onChangeText={setInput}
+            placeholder={assistant.items.length ? 'Reply…' : 'What do you need?'}
+            placeholderTextColor={colors.textMuted}
+            accessibilityLabel="Message to the assistant"
+            multiline
+            style={styles.input}
+            autoFocus={!params.prompt}
+            onSubmitEditing={() => submit()}
+            blurOnSubmit
+            returnKeyType="send"
+          />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Send"
+            disabled={!input.trim() || assistant.busy}
+            onPress={() => submit()}
+            style={[styles.send, (!input.trim() || assistant.busy) && styles.sendDisabled]}>
+            <Ionicons name="arrow-up" size={20} color={colors.onAccent} />
+          </Pressable>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
-function ActionView({ action, onRun }: { action: ProposedAction; onRun: (a: ProposedAction) => void }) {
-  if (action.kind === 'requires_authorization') {
+function Intro({ mode, onPick }: { mode: 'claude' | 'on-device'; onPick: (t: string) => void }) {
+  return (
+    <View style={styles.intro}>
+      <Text muted>
+        Tell me what your day or week needs. I&apos;ll propose changes to your tasks, priorities and time, and nothing
+        changes until you apply it.
+      </Text>
+      {starters(new Date()).map((s) => (
+        <Pressable key={s} accessibilityRole="button" onPress={() => onPick(s)} style={({ pressed }) => [styles.starter, pressed && { opacity: 0.7 }]}>
+          <Text variant="small" style={{ color: colors.accent }}>
+            {s}
+          </Text>
+        </Pressable>
+      ))}
+      <Text variant="small" muted>
+        {mode === 'claude'
+          ? 'Uses Claude. Your request goes with your tasks, plans and this week’s calendar titles, never your messages.'
+          : 'Basic on-device assistant. Sign in under Focus → Account & connections to use Claude.'}
+      </Text>
+    </View>
+  );
+}
+
+function Item({ item }: { item: ChatItem }) {
+  const assistant = useAssistant();
+  if (item.role === 'user') {
     return (
-      <View style={styles.action}>
-        <Text variant="small" muted>
-          {action.label}: {action.reason} Nothing will be sent or changed.
-        </Text>
-        {action.fallback ? <ActionView action={action.fallback} onRun={onRun} /> : null}
+      <View style={styles.userBubble}>
+        <Text style={{ color: colors.onAccent }}>{item.text}</Text>
       </View>
     );
   }
-  const verb = action.kind === 'create_task' ? 'Add' : action.kind === 'start_focus' ? 'Start' : 'Go';
-  if (action.kind === 'propose_plan') {
+  if (item.role === 'error') {
     return (
-      <View style={styles.action}>
-        <Button label={action.label} onPress={() => onRun(action)} />
-      </View>
+      <Text variant="small" style={{ color: colors.danger }} accessibilityRole="alert">
+        {item.text}
+      </Text>
     );
   }
   return (
-    <View style={styles.action}>
+    <View style={styles.assistantBlock}>
+      {item.provider === 'on-device' ? <SampleBadge label="On-device assistant" /> : null}
+      <Text>{item.text}</Text>
+      {item.changes ? (
+        <ChangesCard
+          staged={item.changes.staged}
+          status={item.changes.status}
+          failures={item.changes.failures}
+          onApply={(sel) => assistant.applyChanges(item.id, sel)}
+          onDiscard={() => assistant.discardChanges(item.id)}
+          onUndo={() => assistant.undoChanges(item.id)}
+        />
+      ) : null}
+      {item.actions?.map((a, i) => <LocalAction key={i} action={a} />)}
+    </View>
+  );
+}
+
+/** Proposals from the on-device assistant (signed out). */
+function LocalAction({ action }: { action: ProposedAction }) {
+  const router = useRouter();
+  const { addTask } = useTasks();
+  const focus = useFocus();
+  const plans = usePlans();
+  const notifications = useNotifications();
+  const [outcome, setOutcome] = useState<string | null>(null);
+  if (action.kind === 'requires_authorization') {
+    return (
+      <View style={styles.assistantBlock}>
+        <Text variant="small" muted>
+          {action.reason}
+        </Text>
+        {action.fallback ? <LocalAction action={action.fallback} /> : null}
+      </View>
+    );
+  }
+  const run = () => {
+    const r = executeAction(action, {
+      addTask: (d) => {
+        const res = addTask(d);
+        if (res.ok && res.value.kind === 'reminder') void notifications.requestIfNeeded();
+        return res;
+      },
+      startFocus: (i, m) => focus.start(i, m),
+      navigate: (to, p) => {
+        router.dismissAll();
+        router.navigate(p ? { pathname: to, params: p } : to);
+      },
+      reviewPlan: (request) => void plans.propose(request).then(() => router.replace('/plan-review')),
+    });
+    if (r.message) setOutcome(r.message);
+  };
+  return (
+    <View style={styles.localAction}>
       {action.kind === 'create_task' ? <Text style={styles.flex}>{action.label}</Text> : null}
-      <Button compact label={action.kind === 'create_task' ? verb : action.label} onPress={() => onRun(action)} style={styles.left} />
+      {outcome ? (
+        <Text variant="small" style={{ color: colors.accent }}>
+          {outcome}
+        </Text>
+      ) : (
+        <Button compact label={action.kind === 'create_task' ? 'Add' : action.label} onPress={run} style={styles.left} />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  safe: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
-  action: { gap: space.sm, paddingTop: space.sm, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
-  examples: { gap: space.xs },
-  example: { paddingVertical: space.sm, minHeight: 44, justifyContent: 'center' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: space.xl, paddingTop: space.lg, paddingBottom: space.sm },
+  headerActions: { flexDirection: 'row', gap: space.xs },
+  list: { padding: space.xl, paddingTop: space.sm, gap: space.lg },
+  intro: { gap: space.sm },
+  starter: { paddingVertical: space.sm, minHeight: 40, justifyContent: 'center' },
+  userBubble: { alignSelf: 'flex-end', maxWidth: '85%', backgroundColor: colors.accent, borderRadius: radius.lg, borderBottomRightRadius: 4, paddingHorizontal: space.md, paddingVertical: space.sm },
+  assistantBlock: { gap: space.sm },
+  localAction: { gap: space.xs },
   left: { alignSelf: 'flex-start' },
+  composer: { flexDirection: 'row', alignItems: 'flex-end', gap: space.sm, paddingHorizontal: space.lg, paddingVertical: space.sm, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line, backgroundColor: colors.background },
+  input: { ...typeScale.body, flex: 1, maxHeight: 120, minHeight: MIN_TOUCH, color: colors.text, backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, paddingHorizontal: space.md, paddingTop: 11, paddingBottom: 11 },
+  send: { width: MIN_TOUCH, height: MIN_TOUCH, borderRadius: radius.pill, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
+  sendDisabled: { opacity: 0.35 },
 });

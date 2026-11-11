@@ -8,6 +8,7 @@ import { blockToEvent } from '@/domain/planning/time-block';
 import { isOpen } from '@/domain/tasks/task';
 import { useCalendarEvents } from '@/state/calendar';
 import { useClock } from '@/state/clock';
+import { useChanges } from '@/state/changes-store';
 import { usePlans } from '@/state/plans-store';
 import { useTasks } from '@/state/tasks-store';
 import { colors, MIN_TOUCH, radius, space } from '@/theme/tokens';
@@ -44,10 +45,11 @@ export default function PlanScreen() {
   const weekStart = startOfWeek(date);
   const { tasks } = useTasks();
   const { events: calendarEvents, integration, error: calendarError } = useCalendarEvents(weekStart, addDays(weekStart, 7));
-  const { blocks, appliedPlans, undo } = usePlans();
+  const { blocks } = usePlans();
+  const { history, undo } = useChanges();
   // Time set aside through Intentional shows alongside calendar events.
   const events = [...calendarEvents, ...blocks.map(blockToEvent)];
-  const recentPlan = [...appliedPlans].reverse().find((p) => !p.undone && now.getTime() - new Date(p.appliedAt).getTime() < 7 * 86_400_000);
+  const recentPlan = [...history].reverse().find((p) => !p.undone && now.getTime() - new Date(p.appliedAt).getTime() < 7 * 86_400_000);
 
   const addTask = (d: LocalDate | null) =>
     router.push({ pathname: '/task/new', params: d ? { date: d } : {} });
@@ -69,10 +71,10 @@ export default function PlanScreen() {
       {recentPlan ? (
         <Card>
           <Text variant="label" muted>
-            Current plan
+            Last change from the assistant
           </Text>
           <Text>{recentPlan.summary}</Text>
-          <Button compact tone="quiet" label="Undo plan" style={styles.left} onPress={() => undo(recentPlan.id)} accessibilityHint="Removes the time blocks, reminders and priorities this plan added" />
+          <Button compact tone="quiet" label="Undo" style={styles.left} onPress={() => undo(recentPlan.id)} accessibilityHint="Reverses everything in this set of changes" />
         </Card>
       ) : null}
 

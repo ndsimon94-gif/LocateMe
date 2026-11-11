@@ -249,18 +249,6 @@ export function summarize(ops: PlanOperation[], days: LocalDate[]): string {
   return `For ${describeDays(days)}: ${parts.join(', ')}.`;
 }
 
-/** Record kept so an applied plan can be undone. */
-export interface AppliedPlan {
-  id: string;
-  appliedAt: string;
-  summary: string;
-  createdTaskIds: string[];
-  createdBlockIds: string[];
-  prioritizedTaskIds: string[];
-  previousWindows: CommunicationWindow[] | null;
-  undone: boolean;
-}
-
 /** Start/end timestamps for an operation, for display. */
 export function operationTime(op: PlanOperation): Date | null {
   if (op.op === 'add_block') return atTime(op.block.date, op.block.start);
